@@ -19,7 +19,9 @@ npm_package(
     name = "pumpkinSpiceEngine",
     srcs = [
         ":graphics-engine",
+        "package.json"
     ],
+    include_runfiles = False,
     package = "@pumkinspicegames/pumpkinSpiceEngine",
     visibility = ["//visibility:public"],
 )
