@@ -5,6 +5,7 @@ ts_project(
     name = "graphics-engine",
     srcs = glob(["**/*.ts"], exclude=["**/*.spec.ts"]),
     declaration = True,
+    transpiler = "tsc",
     tsconfig = "//:tsconfig",
     deps = [
         "//:node_modules/gl-matrix",

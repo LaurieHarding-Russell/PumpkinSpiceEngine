@@ -23,6 +23,7 @@ ts_project(
     name = "app",
     srcs = glob(["*.ts"]),
     declaration = True,
+    transpiler = "tsc",
     deps = [
         "//:node_modules/@pumkinspicegames/graphics_engine",
         "//:node_modules/gl-matrix",
