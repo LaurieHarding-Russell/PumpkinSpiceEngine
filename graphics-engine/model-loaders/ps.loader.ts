@@ -1,5 +1,5 @@
 import { mat4 } from "gl-matrix";
-import { ModelInfo, TextureInfo, BoneInfo, PoseInfo } from "./model-info";
+import { BoneInfo, ModelInfo, PoseInfo, TextureInfo } from "../model-info";
 
 export function loadPSObject(psFile: string, texture: TexImageSource | null): ModelInfo {
 

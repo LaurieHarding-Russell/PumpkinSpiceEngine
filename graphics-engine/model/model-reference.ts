@@ -1,7 +1,7 @@
 import { PoseInfo } from "../model-info";
 
 export enum ShadersType {
-    phongBlinn = "phongBlin",
+    main = "main",
     animated = "animated",
     terrian = 'terrian'
 }
@@ -9,7 +9,7 @@ export enum ShadersType {
 export interface ModelReference {
     offset: number;
     numberOfVerts: number;
-    shader: ShadersType;
+    shader: ShadersType | string;
     texture: TexImageSource | null
     skeleton: Array<PoseInfo>;
 }

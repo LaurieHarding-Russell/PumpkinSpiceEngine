@@ -1,7 +1,6 @@
 import { ModelInfo } from "@pumkinspicegames/pumpkinSpiceEngine/model-info";
-import { loadPSObject } from "@pumkinspicegames/pumpkinSpiceEngine/ps.loader";
+import { loadPSObject } from "@pumkinspicegames/pumpkinSpiceEngine/model-loaders/ps.loader";
 
-// Probably shoudn't be part of the graphics engine. 
 export class ModelResources {
     
 
@@ -11,7 +10,6 @@ export class ModelResources {
     constructor() {
     }
 
-    // FIXME, think about this. Maybe just stick with the more generic class and move this out?
     public async load() {
         await this.loadCube();
     }

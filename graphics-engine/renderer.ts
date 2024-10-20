@@ -1,17 +1,13 @@
 import { mat4 } from 'gl-matrix';
 import { ModelReference, ShadersType } from "./model/model-reference";
-import { openGlInitMainRenderer } from "./load-shader";
 import { BufferFactory, Buffers } from './buffer-factory';
 import { Vector3 } from './model/vector';
 import { Camera } from './model/camera';
+import { openGlInitRenderer, ShaderProgramInfo } from './load-shader';
 
 export class Renderer {
 
-  public getProjectionMatrix(): mat4 {
-    return mat4.clone(this.projectionMatrix);
-  }
-
-  private programInfo: any;
+  private shaderPrograms = new Map<string, ShaderProgramInfo>();
   
   private webGl: WebGL2RenderingContext;
 
@@ -19,7 +15,7 @@ export class Renderer {
 
   private bufferFactory!: BufferFactory;
 
-  private currentRender: ShadersType | undefined = undefined;
+  private currentRender: ShadersType | string | undefined = undefined;
 
   private buffers!: Buffers;
     
@@ -32,15 +28,13 @@ export class Renderer {
     this.bufferFactory = bufferFactory;
     this.buffers = this.bufferFactory.create(this.webGl);
 
-    this.webGl.clearColor(1.0, 1.0, 1.0, 1.0);
-    this.webGl.enable(this.webGl.DEPTH_TEST);
-    this.webGl.depthFunc(this.webGl.LESS);
-    
-    this.webGl.clear(this.webGl.DEPTH_BUFFER_BIT);
+    this.setOpenGlDefaults();
 
-    this.programInfo = openGlInitMainRenderer(this.webGl, this.buffers);
-    
-    this.webGl.useProgram(this.programInfo.program);
+    this.shaderPrograms.set(ShadersType.main, openGlInitRenderer(this.webGl, this.buffers));
+  }
+
+  public getProjectionMatrix(): mat4 {
+    return mat4.clone(this.projectionMatrix);
   }
 
   public setProjectionMatrix(camera: Camera) {
@@ -80,59 +74,70 @@ export class Renderer {
   }
 
   public renderMain(location: Vector3, modelReference: ModelReference) {
-    switch (modelReference.shader) {
-      default:
-      case ShadersType.phongBlinn:
-        this.renderPhongBlinn(location, modelReference)
-    }
-  }
-
-  public renderPhongBlinn(location: Vector3, modelReference: ModelReference) {
-
-    if (this.currentRender != ShadersType.phongBlinn) {
-      this.webGl.useProgram(this.programInfo.program);
-      this.currentRender = ShadersType.phongBlinn;
-    }
-
+    let programInfo = this.shaderPrograms.get(modelReference.shader)!;
+    this.useShaderProgram(modelReference.shader);
     this.webGl.uniformMatrix4fv(
-      this.programInfo.uniformLocations.projectionMatrix,
+      programInfo.uniformLocations.projectionMatrix,
         false,
         this.projectionMatrix);
+    this.setModelView(location, programInfo);
+    this.setTexture(modelReference, programInfo);
+    this.setNormal(programInfo);
+    this.webGl.drawArrays(this.webGl.TRIANGLES, modelReference.offset, modelReference.numberOfVerts);
+  }
 
+  private setOpenGlDefaults() {
+    this.webGl.clearColor(1.0, 1.0, 1.0, 1.0);
+    this.webGl.enable(this.webGl.DEPTH_TEST);
+    this.webGl.depthFunc(this.webGl.LESS);
+    this.webGl.clear(this.webGl.DEPTH_BUFFER_BIT);
+  }
+
+  private setModelView(location: Vector3, programInfo: ShaderProgramInfo) {
     const modelViewMatrix = mat4.create();
 
     mat4.translate(
-        modelViewMatrix,     // destination matrix
-        modelViewMatrix,     // matrix to translate
-        [location.x, location.y, location.z]);  // amount to translate
+      modelViewMatrix, // destination matrix
+      modelViewMatrix, // matrix to translate
+      [location.x, location.y, location.z]); // amount to translate
 
     this.webGl.uniformMatrix4fv(
-        this.programInfo.uniformLocations.modelViewMatrix,
-        false,
-        modelViewMatrix);
+      programInfo.uniformLocations.modelViewMatrix,
+      false,
+      modelViewMatrix);
+  }
 
+  private setNormal(programInfo: ShaderProgramInfo) {
+    const normalMatrix = mat4.create();
+    mat4.identity(normalMatrix);
+
+    this.webGl.uniformMatrix4fv(
+      programInfo.uniformLocations.normalMatrix,
+      false,
+      normalMatrix);
+  }
+
+  private setTexture(modelReference: ModelReference, programInfo: ShaderProgramInfo) {
     if (modelReference.texture != null) {
-      this.webGl.bindTexture(this.webGl.TEXTURE_2D, this.programInfo.uniformLocations.texture);
+      this.webGl.bindTexture(this.webGl.TEXTURE_2D, programInfo.uniformLocations.texture);
       this.webGl.texImage2D(this.webGl.TEXTURE_2D, 0, this.webGl.RGBA, this.webGl.RGBA, this.webGl.UNSIGNED_BYTE,
         modelReference.texture);
       this.webGl.texParameteri(this.webGl.TEXTURE_2D, this.webGl.TEXTURE_WRAP_S, this.webGl.REPEAT);
       this.webGl.texParameteri(this.webGl.TEXTURE_2D, this.webGl.TEXTURE_WRAP_T, this.webGl.REPEAT);
       this.webGl.generateMipmap(this.webGl.TEXTURE_2D);
     } else {
-      this.webGl.bindTexture(this.webGl.TEXTURE_2D, this.programInfo.uniformLocations.texture);
+      this.webGl.bindTexture(this.webGl.TEXTURE_2D, programInfo.uniformLocations.texture);
       this.webGl.texImage2D(this.webGl.TEXTURE_2D, 0, this.webGl.RGBA, this.webGl.RGBA, this.webGl.UNSIGNED_BYTE,
         this.bufferFactory.defaultSkin);
-        this.webGl.generateMipmap(this.webGl.TEXTURE_2D);
+      this.webGl.generateMipmap(this.webGl.TEXTURE_2D);
     }
+  }
 
-    const normalMatrix = mat4.create();
-    mat4.identity(normalMatrix)
-
-    this.webGl.uniformMatrix4fv(
-      this.programInfo.uniformLocations.normalMatrix,
-      false,
-      normalMatrix);
-
-    this.webGl.drawArrays(this.webGl.TRIANGLES, modelReference.offset, modelReference.numberOfVerts);
+  private useShaderProgram(shaderProgram: ShadersType | string): void {
+    let programInfo: WebGLProgram = this.shaderPrograms.get(shaderProgram)!.program;
+    if (this.currentRender != shaderProgram) {
+      this.webGl.useProgram(programInfo);
+      this.currentRender = shaderProgram;
+    }
   }
 }

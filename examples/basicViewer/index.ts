@@ -48,7 +48,7 @@ setTimeout(() => {
     modelResources.load().then(() => {
       let bufferFactory = new BufferFactory();
       bufferFactory
-        .addModel("Cube", modelResources.cube, ShadersType.phongBlinn)
+        .addModel("Cube", modelResources.cube, ShadersType.main)
         .defaultSkin = modelResources.defaultSkin;
 
         renderer = new Renderer(webGl);

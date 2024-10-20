@@ -28,7 +28,7 @@ export class BufferFactory {
     constructor() {
     }
     
-    public addModel(name: string, modelInfo: ModelInfo, shader: ShadersType): BufferFactory {
+    public addModel(name: string, modelInfo: ModelInfo, shader: ShadersType | string): BufferFactory {
         this.models.push({
             ...modelInfo
         });
@@ -82,7 +82,6 @@ export class BufferFactory {
                 }
             }
         }
-        // console.log("arrayOfAll", arrayOfAll);
 
         gl.bindBuffer(gl.ARRAY_BUFFER, generalBuffer);
         gl.bufferData(gl.ARRAY_BUFFER,
