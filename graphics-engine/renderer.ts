@@ -4,6 +4,7 @@ import { BufferFactory, Buffers } from './buffer-factory';
 import { Vector3 } from './model/vector';
 import { Camera } from './model/camera';
 import { openGlInitRenderer, ShaderProgramInfo } from './load-shader';
+import { phongVectorSource, phongFragmentSource } from "./shaders/phong-blin";
 
 export class Renderer {
 
@@ -30,7 +31,18 @@ export class Renderer {
 
     this.setOpenGlDefaults();
 
-    this.shaderPrograms.set(ShadersType.main, openGlInitRenderer(this.webGl, this.buffers));
+    this.shaderPrograms.set(ShadersType.main, openGlInitRenderer(this.webGl, this.buffers, phongVectorSource, phongFragmentSource));
+  }
+
+  public addShader(shaderName: string, source: {vectorSource: string, fragSource: string}): void {
+    console.log("test")
+    if (shaderName == ShadersType.main) {
+      throw "Can't override main shader";
+    }
+    if (this.buffers == null) {
+      throw "Please run start before adding a shader. Buffer undefined.";
+    }
+    this.shaderPrograms.set(shaderName, openGlInitRenderer(this.webGl, this.buffers, source.vectorSource, source.fragSource));
   }
 
   public getProjectionMatrix(): mat4 {

@@ -1,8 +1,8 @@
 import { Buffers, VALUES_PER_NORMAL, VALUES_PER_TEXTURE_COORDINATES, VALUES_PER_VERT, bufferStride } from "./buffer-factory";
-import { phongVectorSource, phongFragmentSource } from "./shaders/phong-blin";
 
-export function openGlInitRenderer(webGl: WebGL2RenderingContext, buffers: Buffers): ShaderProgramInfo {
-    const shaderProgram = initShaderProgram(webGl, phongVectorSource, phongFragmentSource);
+// FIXME, maybe change this to a factory
+export function openGlInitRenderer(webGl: WebGL2RenderingContext, buffers: Buffers, vShaderCode:string, fShader: string): ShaderProgramInfo {
+    const shaderProgram = initShaderProgram(webGl, vShaderCode, fShader);
 
     const programInfo: ShaderProgramInfo = {
       program: shaderProgram,
