@@ -1,10 +1,10 @@
-import { BufferFactory, Buffers, VALUES_PER_JOINT_ID, VALUES_PER_JOINT_WEIGHT, VALUES_PER_NORMAL, VALUES_PER_TEXTURE_COORDINATES, VALUES_PER_VERT, bufferStride } from "./buffer-factory";
+import { Buffers, VALUES_PER_NORMAL, VALUES_PER_TEXTURE_COORDINATES, VALUES_PER_VERT, bufferStride } from "./buffer-factory";
 import { phongVectorSource, phongFragmentSource } from "./shaders/phong-blin";
 
-export function openGlInitMainRenderer(webGl: WebGLRenderingContext, buffers: Buffers): object {
+export function openGlInitRenderer(webGl: WebGL2RenderingContext, buffers: Buffers): ShaderProgramInfo {
     const shaderProgram = initShaderProgram(webGl, phongVectorSource, phongFragmentSource);
 
-    const programInfo = {
+    const programInfo: ShaderProgramInfo = {
       program: shaderProgram,
       attribLocations: {
         vertexPosition: webGl.getAttribLocation(shaderProgram, 'inputPosition'),
@@ -12,14 +12,14 @@ export function openGlInitMainRenderer(webGl: WebGLRenderingContext, buffers: Bu
         texcoordLocation: webGl.getAttribLocation(shaderProgram, 'inputUV'),
       },
       uniformLocations: {
-        projectionMatrix: webGl.getUniformLocation(shaderProgram, 'projection'),
-        modelViewMatrix: webGl.getUniformLocation(shaderProgram, 'modelview'),
-        normalMatrix: webGl.getUniformLocation(shaderProgram, 'normalMat'),
-        texture: webGl.createTexture()
+        projectionMatrix: webGl.getUniformLocation(shaderProgram, 'projection')!,
+        modelViewMatrix: webGl.getUniformLocation(shaderProgram, 'modelview')!,
+        normalMatrix: webGl.getUniformLocation(shaderProgram, 'normalMat')!,
+        texture: webGl.createTexture()!
       },
     };
     {
-      const normalize = false; // don't normalize
+      const normalize = false;
 
       // 0 = use type and numComponents above
       const offset = 0; // how many bytes inside the buffer to start from
@@ -54,46 +54,54 @@ export function openGlInitMainRenderer(webGl: WebGLRenderingContext, buffers: Bu
       
     }
     return programInfo;
-  }
+}
 
-//
-// Initialize a shader program, so WebGL knows how to draw our data
-//
-function initShaderProgram(gl: any, vsSource: any, fsSource: any) {
+function initShaderProgram(gl: WebGL2RenderingContext, vsSource: string, fsSource: string): WebGLProgram {
   const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource);
   const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
 
-  // Create the shader program
-
-  const shaderProgram = gl.createProgram();
+  const shaderProgram: WebGLProgram = gl.createProgram()!;
   gl.attachShader(shaderProgram, vertexShader);
   gl.attachShader(shaderProgram, fragmentShader);
   gl.linkProgram(shaderProgram);
 
-  // If creating the shader program failed, alert
-
   if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
     alert('Unable to initialize the shader program: ' + gl.getProgramInfoLog(shaderProgram));
-    return null;
+    throw "Could not initialize shader";
   }
 
   return shaderProgram;
 }
 
-//
-// creates a shader of the given type, uploads the source and
-// compiles it.
-//
-function loadShader(gl: any, type: any, source: any) {
-  const shader = gl.createShader(type);
+function loadShader(gl: WebGL2RenderingContext, type: GLint, source: string): WebGLShader {
+  const shader = gl.createShader(type)!;
   gl.shaderSource(shader, source);
   gl.compileShader(shader);
 
   if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
     alert('An error occurred compiling the shaders: ' + gl.getShaderInfoLog(shader));
     gl.deleteShader(shader);
-    return null;
+    throw "Could not load shader";
   }
 
   return shader;
+}
+
+export interface ShaderProgramInfo {
+  program: WebGLProgram;
+  attribLocations: AttributeLocations;
+  uniformLocations: UniformLocation;
+}
+
+export interface AttributeLocations {
+  vertexPosition: GLint;
+  inputNormal: GLint;
+  texcoordLocation: GLint;
+}
+
+export interface UniformLocation {
+  projectionMatrix: WebGLUniformLocation;
+  modelViewMatrix: WebGLUniformLocation;
+  normalMatrix: WebGLUniformLocation;
+  texture: WebGLTexture;
 }

@@ -28,7 +28,7 @@ export class BufferFactory {
     constructor() {
     }
     
-    public addModel(name: string, modelInfo: ModelInfo, shader: ShadersType): BufferFactory {
+    public addModel(name: string, modelInfo: ModelInfo, shader: ShadersType | string): BufferFactory {
         this.models.push({
             ...modelInfo
         });

@@ -1,26 +1,17 @@
 import { mat4 } from 'gl-matrix';
 import { ModelReference, ShadersType } from "./model/model-reference";
-import { openGlInitMainRenderer } from "./load-shader";
+import { openGlInitRenderer, ShaderProgramInfo } from "./load-shader";
 import { BufferFactory, Buffers } from './buffer-factory';
 import { Vector3 } from './model/vector';
 import { Camera } from './model/camera';
 
 export class Renderer {
 
-  public getProjectionMatrix(): mat4 {
-    return mat4.clone(this.projectionMatrix);
-  }
-
-  private programInfo: any;
-  
+  private shaderPrograms: Map<String, ShaderProgramInfo> = new Map();
   private webGl: WebGL2RenderingContext;
-
   private projectionMatrix = mat4.create();
-
   private bufferFactory!: BufferFactory;
-
-  private currentRender: ShadersType | undefined = undefined;
-
+  private setRenderProgram: ShadersType | string | undefined;
   private buffers!: Buffers;
     
   public constructor(webGl: WebGL2RenderingContext) {
@@ -28,20 +19,29 @@ export class Renderer {
   }
 
   public async start(bufferFactory: BufferFactory): Promise<void> {
-
     this.bufferFactory = bufferFactory;
     this.buffers = this.bufferFactory.create(this.webGl);
 
     this.webGl.clearColor(1.0, 1.0, 1.0, 1.0);
     this.webGl.enable(this.webGl.DEPTH_TEST);
     this.webGl.depthFunc(this.webGl.LESS);
-    
     this.webGl.clear(this.webGl.DEPTH_BUFFER_BIT);
 
-    this.programInfo = openGlInitMainRenderer(this.webGl, this.buffers);
-    
-    this.webGl.useProgram(this.programInfo.program);
+    this.shaderPrograms.set(ShadersType.main, openGlInitRenderer(this.webGl, this.buffers));
+    this.useShaderProgram(ShadersType.main);
   }
+
+  public addShader(shaderName: string, program: ShaderProgramInfo): void {
+    if (shaderName == ShadersType.main) {
+      throw "Can't override main shader";
+    }
+    this.shaderPrograms.set(shaderName, program);
+  }
+
+  public getProjectionMatrix(): mat4 {
+    return mat4.clone(this.projectionMatrix);
+  }
+
 
   public setProjectionMatrix(camera: Camera) {
     const fieldOfView = 45 * Math.PI / 180;   // in radians
@@ -80,59 +80,70 @@ export class Renderer {
   }
 
   public renderMain(location: Vector3, modelReference: ModelReference) {
-    switch (modelReference.shader) {
-      default:
-      case ShadersType.phongBlinn:
-        this.renderPhongBlinn(location, modelReference)
-    }
+    this.useShaderProgram(modelReference.shader);
+    this.render(location, modelReference)
   }
 
-  public renderPhongBlinn(location: Vector3, modelReference: ModelReference) {
+  public render(location: Vector3, modelReference: ModelReference) {
+    let programInfo = this.shaderPrograms.get(modelReference.shader)!;
 
-    if (this.currentRender != ShadersType.phongBlinn) {
-      this.webGl.useProgram(this.programInfo.program);
-      this.currentRender = ShadersType.phongBlinn;
-    }
+    this.setRenderLocation(programInfo, location);
+    this.bindModelTexture(modelReference, programInfo);
+    this.bindNormalMatrix(programInfo);
+
+    // this.webGl.drawArrays(this.webGl.TRIANGLES, modelReference.offset, modelReference.numberOfVerts);
+  }
+
+  private bindNormalMatrix(programInfo: ShaderProgramInfo) {
+    const normalMatrix = mat4.create();
+    mat4.identity(normalMatrix);
 
     this.webGl.uniformMatrix4fv(
-      this.programInfo.uniformLocations.projectionMatrix,
-        false,
-        this.projectionMatrix);
+      programInfo.uniformLocations.normalMatrix,
+      false,
+      normalMatrix);
+  }
+
+  private setRenderLocation(programInfo: ShaderProgramInfo, location: Vector3): void {
+    this.webGl.uniformMatrix4fv(
+      programInfo.uniformLocations.projectionMatrix,
+      false,
+      this.projectionMatrix);
 
     const modelViewMatrix = mat4.create();
 
     mat4.translate(
-        modelViewMatrix,     // destination matrix
-        modelViewMatrix,     // matrix to translate
-        [location.x, location.y, location.z]);  // amount to translate
+      modelViewMatrix, // destination matrix
+      modelViewMatrix, // matrix to translate
+      [location.x, location.y, location.z]); // amount to translate
 
     this.webGl.uniformMatrix4fv(
-        this.programInfo.uniformLocations.modelViewMatrix,
-        false,
-        modelViewMatrix);
+      programInfo.uniformLocations.modelViewMatrix,
+      false,
+      modelViewMatrix);
+  }
 
+  private bindModelTexture(modelReference: ModelReference, programInfo: ShaderProgramInfo): void {
     if (modelReference.texture != null) {
-      this.webGl.bindTexture(this.webGl.TEXTURE_2D, this.programInfo.uniformLocations.texture);
+      this.webGl.bindTexture(this.webGl.TEXTURE_2D, programInfo.uniformLocations.texture);
       this.webGl.texImage2D(this.webGl.TEXTURE_2D, 0, this.webGl.RGBA, this.webGl.RGBA, this.webGl.UNSIGNED_BYTE,
         modelReference.texture);
       this.webGl.texParameteri(this.webGl.TEXTURE_2D, this.webGl.TEXTURE_WRAP_S, this.webGl.REPEAT);
       this.webGl.texParameteri(this.webGl.TEXTURE_2D, this.webGl.TEXTURE_WRAP_T, this.webGl.REPEAT);
       this.webGl.generateMipmap(this.webGl.TEXTURE_2D);
     } else {
-      this.webGl.bindTexture(this.webGl.TEXTURE_2D, this.programInfo.uniformLocations.texture);
+      this.webGl.bindTexture(this.webGl.TEXTURE_2D, programInfo.uniformLocations.texture);
       this.webGl.texImage2D(this.webGl.TEXTURE_2D, 0, this.webGl.RGBA, this.webGl.RGBA, this.webGl.UNSIGNED_BYTE,
         this.bufferFactory.defaultSkin);
-        this.webGl.generateMipmap(this.webGl.TEXTURE_2D);
+      this.webGl.generateMipmap(this.webGl.TEXTURE_2D);
     }
+  }
 
-    const normalMatrix = mat4.create();
-    mat4.identity(normalMatrix)
-
-    this.webGl.uniformMatrix4fv(
-      this.programInfo.uniformLocations.normalMatrix,
-      false,
-      normalMatrix);
-
-    this.webGl.drawArrays(this.webGl.TRIANGLES, modelReference.offset, modelReference.numberOfVerts);
+  private useShaderProgram(shaderProgram: ShadersType | string): void {
+    let programInfo: WebGLProgram = this.shaderPrograms.get(shaderProgram)!.program;
+    if (this.setRenderProgram != shaderProgram) {
+      this.webGl.useProgram(programInfo);
+      this.setRenderProgram = shaderProgram;
+    }
   }
 }
