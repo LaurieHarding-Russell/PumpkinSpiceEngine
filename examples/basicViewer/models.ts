@@ -1,5 +1,5 @@
 import { ModelInfo } from "@pumkinspicegames/pumpkinSpiceEngine/model-info";
-import { loadPSObject } from "@pumkinspicegames/pumpkinSpiceEngine/ps.loader";
+import { loadPSObject } from "@pumkinspicegames/pumpkinSpiceEngine/model-loaders/ps.loader";
 
 export class ModelResources {
     

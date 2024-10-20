@@ -82,7 +82,6 @@ export class BufferFactory {
                 }
             }
         }
-        // console.log("arrayOfAll", arrayOfAll);
 
         gl.bindBuffer(gl.ARRAY_BUFFER, generalBuffer);
         gl.bufferData(gl.ARRAY_BUFFER,

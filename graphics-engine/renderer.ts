@@ -7,10 +7,6 @@ import { openGlInitRenderer, ShaderProgramInfo } from './load-shader';
 
 export class Renderer {
 
-  public getProjectionMatrix(): mat4 {
-    return mat4.clone(this.projectionMatrix);
-  }
-
   private shaderPrograms = new Map<string, ShaderProgramInfo>();
   
   private webGl: WebGL2RenderingContext;
@@ -32,15 +28,13 @@ export class Renderer {
     this.bufferFactory = bufferFactory;
     this.buffers = this.bufferFactory.create(this.webGl);
 
-    this.webGl.clearColor(1.0, 1.0, 1.0, 1.0);
-    this.webGl.enable(this.webGl.DEPTH_TEST);
-    this.webGl.depthFunc(this.webGl.LESS);
-    
-    this.webGl.clear(this.webGl.DEPTH_BUFFER_BIT);
+    this.setOpenGlDefaults();
 
     this.shaderPrograms.set(ShadersType.main, openGlInitRenderer(this.webGl, this.buffers));
-    
-    this.webGl.useProgram(this.shaderPrograms.get(ShadersType.main)!.program);
+  }
+
+  public getProjectionMatrix(): mat4 {
+    return mat4.clone(this.projectionMatrix);
   }
 
   public setProjectionMatrix(camera: Camera) {
@@ -80,31 +74,23 @@ export class Renderer {
   }
 
   public renderMain(location: Vector3, modelReference: ModelReference) {
-    switch (modelReference.shader) {
-      default:
-      case ShadersType.main:
-        this.renderPhongBlinn(location, modelReference)
-    }
-  }
-
-  public renderPhongBlinn(location: Vector3, modelReference: ModelReference) {
-
-    let programInfo = this.shaderPrograms.get(ShadersType.main)!;
-
+    let programInfo = this.shaderPrograms.get(modelReference.shader)!;
     this.useShaderProgram(modelReference.shader);
-
     this.webGl.uniformMatrix4fv(
       programInfo.uniformLocations.projectionMatrix,
         false,
         this.projectionMatrix);
-
     this.setModelView(location, programInfo);
-
     this.setTexture(modelReference, programInfo);
-
     this.setNormal(programInfo);
-
     this.webGl.drawArrays(this.webGl.TRIANGLES, modelReference.offset, modelReference.numberOfVerts);
+  }
+
+  private setOpenGlDefaults() {
+    this.webGl.clearColor(1.0, 1.0, 1.0, 1.0);
+    this.webGl.enable(this.webGl.DEPTH_TEST);
+    this.webGl.depthFunc(this.webGl.LESS);
+    this.webGl.clear(this.webGl.DEPTH_BUFFER_BIT);
   }
 
   private setModelView(location: Vector3, programInfo: ShaderProgramInfo) {
