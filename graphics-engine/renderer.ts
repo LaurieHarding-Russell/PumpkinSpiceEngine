@@ -1,17 +1,26 @@
 import { mat4 } from 'gl-matrix';
 import { ModelReference, ShadersType } from "./model/model-reference";
-import { openGlInitRenderer, ShaderProgramInfo } from "./load-shader";
 import { BufferFactory, Buffers } from './buffer-factory';
 import { Vector3 } from './model/vector';
 import { Camera } from './model/camera';
+import { openGlInitRenderer, ShaderProgramInfo } from './load-shader';
 
 export class Renderer {
 
-  private shaderPrograms: Map<String, ShaderProgramInfo> = new Map();
+  public getProjectionMatrix(): mat4 {
+    return mat4.clone(this.projectionMatrix);
+  }
+
+  private shaderPrograms = new Map<string, ShaderProgramInfo>();
+  
   private webGl: WebGL2RenderingContext;
+
   private projectionMatrix = mat4.create();
+
   private bufferFactory!: BufferFactory;
-  private setRenderProgram: ShadersType | string | undefined;
+
+  private currentRender: ShadersType | string | undefined = undefined;
+
   private buffers!: Buffers;
     
   public constructor(webGl: WebGL2RenderingContext) {
@@ -19,29 +28,20 @@ export class Renderer {
   }
 
   public async start(bufferFactory: BufferFactory): Promise<void> {
+
     this.bufferFactory = bufferFactory;
     this.buffers = this.bufferFactory.create(this.webGl);
 
     this.webGl.clearColor(1.0, 1.0, 1.0, 1.0);
     this.webGl.enable(this.webGl.DEPTH_TEST);
     this.webGl.depthFunc(this.webGl.LESS);
+    
     this.webGl.clear(this.webGl.DEPTH_BUFFER_BIT);
 
     this.shaderPrograms.set(ShadersType.main, openGlInitRenderer(this.webGl, this.buffers));
-    this.useShaderProgram(ShadersType.main);
+    
+    this.webGl.useProgram(this.shaderPrograms.get(ShadersType.main)!.program);
   }
-
-  public addShader(shaderName: string, program: ShaderProgramInfo): void {
-    if (shaderName == ShadersType.main) {
-      throw "Can't override main shader";
-    }
-    this.shaderPrograms.set(shaderName, program);
-  }
-
-  public getProjectionMatrix(): mat4 {
-    return mat4.clone(this.projectionMatrix);
-  }
-
 
   public setProjectionMatrix(camera: Camera) {
     const fieldOfView = 45 * Math.PI / 180;   // in radians
@@ -80,36 +80,34 @@ export class Renderer {
   }
 
   public renderMain(location: Vector3, modelReference: ModelReference) {
+    switch (modelReference.shader) {
+      default:
+      case ShadersType.main:
+        this.renderPhongBlinn(location, modelReference)
+    }
+  }
+
+  public renderPhongBlinn(location: Vector3, modelReference: ModelReference) {
+
+    let programInfo = this.shaderPrograms.get(ShadersType.main)!;
+
     this.useShaderProgram(modelReference.shader);
-    this.render(location, modelReference)
-  }
 
-  public render(location: Vector3, modelReference: ModelReference) {
-    let programInfo = this.shaderPrograms.get(modelReference.shader)!;
-
-    this.setRenderLocation(programInfo, location);
-    this.bindModelTexture(modelReference, programInfo);
-    this.bindNormalMatrix(programInfo);
-
-    // this.webGl.drawArrays(this.webGl.TRIANGLES, modelReference.offset, modelReference.numberOfVerts);
-  }
-
-  private bindNormalMatrix(programInfo: ShaderProgramInfo) {
-    const normalMatrix = mat4.create();
-    mat4.identity(normalMatrix);
-
-    this.webGl.uniformMatrix4fv(
-      programInfo.uniformLocations.normalMatrix,
-      false,
-      normalMatrix);
-  }
-
-  private setRenderLocation(programInfo: ShaderProgramInfo, location: Vector3): void {
     this.webGl.uniformMatrix4fv(
       programInfo.uniformLocations.projectionMatrix,
-      false,
-      this.projectionMatrix);
+        false,
+        this.projectionMatrix);
 
+    this.setModelView(location, programInfo);
+
+    this.setTexture(modelReference, programInfo);
+
+    this.setNormal(programInfo);
+
+    this.webGl.drawArrays(this.webGl.TRIANGLES, modelReference.offset, modelReference.numberOfVerts);
+  }
+
+  private setModelView(location: Vector3, programInfo: ShaderProgramInfo) {
     const modelViewMatrix = mat4.create();
 
     mat4.translate(
@@ -123,7 +121,17 @@ export class Renderer {
       modelViewMatrix);
   }
 
-  private bindModelTexture(modelReference: ModelReference, programInfo: ShaderProgramInfo): void {
+  private setNormal(programInfo: ShaderProgramInfo) {
+    const normalMatrix = mat4.create();
+    mat4.identity(normalMatrix);
+
+    this.webGl.uniformMatrix4fv(
+      programInfo.uniformLocations.normalMatrix,
+      false,
+      normalMatrix);
+  }
+
+  private setTexture(modelReference: ModelReference, programInfo: ShaderProgramInfo) {
     if (modelReference.texture != null) {
       this.webGl.bindTexture(this.webGl.TEXTURE_2D, programInfo.uniformLocations.texture);
       this.webGl.texImage2D(this.webGl.TEXTURE_2D, 0, this.webGl.RGBA, this.webGl.RGBA, this.webGl.UNSIGNED_BYTE,
@@ -141,9 +149,9 @@ export class Renderer {
 
   private useShaderProgram(shaderProgram: ShadersType | string): void {
     let programInfo: WebGLProgram = this.shaderPrograms.get(shaderProgram)!.program;
-    if (this.setRenderProgram != shaderProgram) {
+    if (this.currentRender != shaderProgram) {
       this.webGl.useProgram(programInfo);
-      this.setRenderProgram = shaderProgram;
+      this.currentRender = shaderProgram;
     }
   }
 }
