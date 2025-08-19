@@ -60,7 +60,7 @@ setTimeout(() => {
 
                 renderer.setProjectionMatrix(camera);
 
-                renderer?.renderMain(position, 
+                renderer?.renderMainR(position, {x: 5, y: 5, z: 5},
                     bufferFactory.modelReferences.get("Cube")!
                 );
             }, 33)

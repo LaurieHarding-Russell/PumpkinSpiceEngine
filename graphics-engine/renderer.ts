@@ -85,14 +85,19 @@ export class Renderer {
     );
   }
 
-  public renderMain(location: Vector3, modelReference: ModelReference) {
+
+  public renderMain(location: Vector3, modelReference: ModelReference) { 
+    this.renderMainR(location, {x:0, y:0, z:0}, modelReference);
+  }
+
+  public renderMainR(location: Vector3, rotation: Vector3, modelReference: ModelReference) {
     let programInfo = this.shaderPrograms.get(modelReference.shader)!;
     this.useShaderProgram(modelReference.shader);
     this.webGl.uniformMatrix4fv(
       programInfo.uniformLocations.projectionMatrix,
         false,
         this.projectionMatrix);
-    this.setModelView(location, programInfo);
+    this.setModelView(location, rotation, programInfo);
     this.setTexture(modelReference, programInfo);
     this.setNormal(programInfo);
     this.webGl.drawArrays(this.webGl.TRIANGLES, modelReference.offset, modelReference.numberOfVerts);
@@ -105,13 +110,31 @@ export class Renderer {
     this.webGl.clear(this.webGl.DEPTH_BUFFER_BIT);
   }
 
-  private setModelView(location: Vector3, programInfo: ShaderProgramInfo) {
+  private setModelView(location: Vector3, rotation: Vector3, programInfo: ShaderProgramInfo) {
     const modelViewMatrix = mat4.create();
 
     mat4.translate(
       modelViewMatrix, // destination matrix
       modelViewMatrix, // matrix to translate
       [location.x, location.y, location.z]); // amount to translate
+
+    mat4.rotateX(
+      modelViewMatrix,
+      modelViewMatrix,
+      rotation.x
+    )
+
+    mat4.rotateY(
+      modelViewMatrix,
+      modelViewMatrix,
+      rotation.y
+    )
+
+    mat4.rotateZ(
+      modelViewMatrix,
+      modelViewMatrix,
+      rotation.z
+    )
 
     this.webGl.uniformMatrix4fv(
       programInfo.uniformLocations.modelViewMatrix,
