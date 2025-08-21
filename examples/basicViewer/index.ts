@@ -1,5 +1,4 @@
 import { Renderer } from '@pumkinspicegames/pumpkinSpiceEngine/renderer';
-import { Vector3, lookAt } from "@pumkinspicegames/pumpkinSpiceEngine/model/vector";
 import { lookAtPerspective, getPerspective } from "@pumkinspicegames/pumpkinSpiceEngine/util";
 import { BufferFactory, tileModalReference } from "@pumkinspicegames/pumpkinSpiceEngine/buffer-factory";
 import { ShadersType } from "@pumkinspicegames/pumpkinSpiceEngine/model/model-reference";
