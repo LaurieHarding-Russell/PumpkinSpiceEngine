@@ -152,6 +152,7 @@ export function getPerspective(webGl: WebGL2RenderingContext): mat4 {
 
 // Note: Up vector should not be parrellel to the forward vector
 export function lookAtPerspective(camera: Camera, lookAtObject: Vector3, tempUpVector: Vector3, projectionMatrix: mat4): mat4 {
+    const newProjectionMatrix = mat4.clone(projectionMatrix);
     const lookAtMatrix = mat4.create();
     const forwardVector = normalize(minus(camera.position, lookAtObject));
 
@@ -182,14 +183,14 @@ export function lookAtPerspective(camera: Camera, lookAtObject: Vector3, tempUpV
         1
     );
 
-    mat4.multiply(projectionMatrix, projectionMatrix, lookAtMatrix)
+    mat4.multiply(newProjectionMatrix, projectionMatrix, lookAtMatrix)
     
     mat4.translate(
-      projectionMatrix,
-      projectionMatrix,
+      newProjectionMatrix,
+      newProjectionMatrix,
       [-camera.position.x, -camera.position.y, camera.position.z]);
 
-    return projectionMatrix;
+    return newProjectionMatrix;
 }
 
 export function radiansToDegrees(radians: number) {
