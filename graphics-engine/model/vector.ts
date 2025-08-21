@@ -91,6 +91,22 @@ export function magnitudeOfVector(v: Vector3): number {
 }
 
 
+export function rotateAroundX(v: Vector3, theta: number): Vector3 {
+    return {
+            x: v.x,
+            y: (v.y * Math.cos(theta)) - (v.z * Math.sin(theta)),
+            z: (v.y * Math.sin(theta)) + (v.z * Math.cos(theta))
+        }
+}
+
+export function rotateAroundY(v: Vector3, theta: number): Vector3 {
+    return {
+            x: (v.x * Math.cos(theta)) - (v.z * Math.sin(theta)),
+            y: v.y,
+            z: (v.x * Math.sin(theta)) + (v.z * Math.cos(theta))
+        }
+}
+
 export function rotateAroundZ(v: Vector3, theta: number): Vector3 {
     return {
             x: (v.x * Math.cos(theta)) - (v.y * Math.sin(theta)),
@@ -98,7 +114,6 @@ export function rotateAroundZ(v: Vector3, theta: number): Vector3 {
             z: v.z
         }
 }
-
 
 export function normalize(v: Vector3): Vector3 {
     const magnitude = magnitudeOfVector(v);
