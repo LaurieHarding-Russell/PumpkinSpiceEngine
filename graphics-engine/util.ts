@@ -1,5 +1,6 @@
 import { mat4, vec3 } from "gl-matrix";
-import { Vector2, Vector3, crossProduct, dotProduct, fromVec3, minus, plus, roundToEPSILON, times } from "./model/vector";
+import { Vector2, Vector3, crossProduct, dotProduct, fromVec3, minus, normalize, plus, roundToEPSILON, times } from "./model/vector";
+import { Camera } from "./model/camera";
 
 
 export const zNear = 0.1;
@@ -132,3 +133,66 @@ export function intersects(origin: Vector3, rayVector: Vector3, triangle: Triang
     }
     return null;
 }
+
+
+export function getPerspective(webGl: WebGL2RenderingContext): mat4 {
+    const fieldOfView = 45 * Math.PI / 180;   // in radians
+    const aspect = webGl.canvas.width / webGl.canvas.height
+    const zNear = 0.1;
+    const zFar = 100.0;
+
+    const projectionMatrix = mat4.create();
+    mat4.perspective(projectionMatrix,
+        fieldOfView,
+        aspect,
+        zNear,
+        zFar);
+    return projectionMatrix;
+}
+
+// Note: Up vector should not be parrellel to the forward vector
+export function lookAtPerspective(camera: Camera, lookAtObject: Vector3, tempUpVector: Vector3, projectionMatrix: mat4): mat4 {
+    const lookAtMatrix = mat4.create();
+    const forwardVector = normalize(minus(camera.position, lookAtObject));
+
+    const rightVector = normalize(crossProduct(tempUpVector, forwardVector))
+
+    const upVector = normalize(crossProduct(forwardVector,rightVector));    
+
+    const translationX = dotProduct(camera.position, rightVector);
+    const translationY = dotProduct(camera.position, upVector);
+    const translationZ = dotProduct(camera.position, forwardVector);
+    mat4.set(
+        lookAtMatrix,
+        rightVector.x,
+        upVector.x,
+        forwardVector.x,
+        0,
+        rightVector.y,
+        upVector.y,
+        forwardVector.y,
+        0,
+        rightVector.z,
+        upVector.z,
+        forwardVector.z,
+        0,
+        -translationX,
+        -translationY,
+        -translationZ,
+        1
+    );
+
+    mat4.multiply(projectionMatrix, projectionMatrix, lookAtMatrix)
+    
+    mat4.translate(
+      projectionMatrix,
+      projectionMatrix,
+      [-camera.position.x, -camera.position.y, camera.position.z]);
+
+    return projectionMatrix;
+}
+
+export function radiansToDegrees(radians: number) {
+    return radians * (180 / Math.PI);
+}
+

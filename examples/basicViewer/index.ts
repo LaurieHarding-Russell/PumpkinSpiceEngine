@@ -1,5 +1,6 @@
 import { Renderer } from '@pumkinspicegames/pumpkinSpiceEngine/renderer';
-import { Vector3 } from "@pumkinspicegames/pumpkinSpiceEngine/model/vector";
+import { Vector3, lookAt } from "@pumkinspicegames/pumpkinSpiceEngine/model/vector";
+import { lookAtPerspective, getPerspective } from "@pumkinspicegames/pumpkinSpiceEngine/util";
 import { BufferFactory, tileModalReference } from "@pumkinspicegames/pumpkinSpiceEngine/buffer-factory";
 import { ShadersType } from "@pumkinspicegames/pumpkinSpiceEngine/model/model-reference";
 import { ModelResources } from './models';
@@ -12,16 +13,16 @@ var selectedType = '0';
 
 
 var renderer: Renderer;
-let position:Vector3 = {
-    x: 0,
-    y: 0,
-    z: 0
-}
+// let position: Vector3 = {
+//     x: 0,
+//     y: 0,
+//     z: -10
+// }
 let camera = {
     position: {
         x: 0,
         y: 0,
-        z: -20
+        z: 0
     }, 
     rotation: {
         x: 0,
@@ -35,7 +36,8 @@ setTimeout(() => {
 
     initializeMovementListeners();
 
-    const gameWindow: HTMLCanvasElement | null = document.querySelector("#screen")    
+    const gameWindow: HTMLCanvasElement | null = document.querySelector("#screen");
+    const stats: HTMLSpanElement = document.querySelector("#stats")!;
 
     if (gameWindow == null) {
         throw "couldn't find things and magic and stuff";
@@ -52,17 +54,50 @@ setTimeout(() => {
         .defaultSkin = modelResources.defaultSkin;
 
         renderer = new Renderer(webGl);
+
+        setInterval(() => {
+            stats.innerHTML = `
+            camera x: ${camera.position.x}
+            camera y: ${camera.position.y}
+            camera z: ${camera.position.z}
+
+            camera rx: ${camera.rotation.x}
+            camera ry: ${camera.rotation.y}
+            camera rz: ${camera.rotation.z}
+            , ` 
+        });
+
         renderer.start(bufferFactory).then(() => {
             // FIXME, loading
             setInterval(() => {
                 gameWindow.width = window.innerWidth
                 gameWindow.height = window.innerHeight
 
-                renderer.setProjectionMatrix(camera);
+                renderer.setProjectionMatrix(lookAtPerspective(camera, {x: 0, y:0, z: 20}, {x: 0, y:1, z: 0}, getPerspective(webGl)));
+                // renderer.setProjectionMatrixByCamera(camera);
 
-                renderer?.renderMainR(position, {x: 5, y: 5, z: 5},
+                renderer?.renderMain({x: 0, y:0, z: 20},
                     bufferFactory.modelReferences.get("Cube")!
                 );
+
+                // renderer?.renderMain({x: 0, y: 0, z: -20},
+                //     bufferFactory.modelReferences.get("Cube")!
+                // );
+
+                // renderer?.renderMain({x: 0, y:-10, z: 0},
+                //     bufferFactory.modelReferences.get("Cube")!
+                // );
+                // renderer?.renderMain({x: 0, y:10, z: 0},
+                //     bufferFactory.modelReferences.get("Cube")!
+                // );
+
+                // renderer?.renderMain({x: 10, y:0, z: 0},
+                //     bufferFactory.modelReferences.get("Cube")!
+                // );
+                // renderer?.renderMain({x: -10, y:0, z: 0},
+                //     bufferFactory.modelReferences.get("Cube")!
+                // );
+
             }, 33)
         });
     });

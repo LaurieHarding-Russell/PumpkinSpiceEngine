@@ -1,4 +1,4 @@
-lockfileVersion: '6.1'
+lockfileVersion: '6.0'
 
 settings:
   autoInstallPeers: true
@@ -11,9 +11,6 @@ dependencies:
   gl-matrix:
     specifier: ^3.4.3
     version: 3.4.3
-  jwt-decode:
-    specifier: ^3.1.2
-    version: 3.1.2
   rxjs:
     specifier: 7.8.1
     version: 7.8.1
@@ -46,9 +43,6 @@ devDependencies:
   '@types/webgl2':
     specifier: ^0.0.7
     version: 0.0.7
-  '@types/websocket':
-    specifier: 1.0.5
-    version: 1.0.5
   babel-jest:
     specifier: 29.6.2
     version: 29.6.2(@babel/core@7.20.2)
@@ -1717,12 +1711,6 @@ packages:
     resolution: {integrity: sha512-kqRrvjA+VEJhVK5qmKTqJTYKftmLhunf2FRXPvqEoCyVUz8RNiT+6eQmZQqjHjUQwB0wpGAWdPaNjnmNSd4BTQ==}
     dev: true
 
-  /@types/websocket@1.0.5:
-    resolution: {integrity: sha512-NbsqiNX9CnEfC1Z0Vf4mE1SgAJ07JnRYcNex7AJ9zAVzmiGHmjKFEk7O4TJIsgv2B1sLEb6owKFZrACwdYngsQ==}
-    dependencies:
-      '@types/node': 16.18.11
-    dev: true
-
   /@types/yargs-parser@21.0.0:
     resolution: {integrity: sha512-iO9ZQHkZxHn4mSakYV0vFHAVDyEOIJQrV2uZ06HxEPcx+mt8swXoZHIbaaJ2crJYFfErySgktuTZ3BeLz+XmFA==}
     dev: true
@@ -3361,10 +3349,6 @@ packages:
     engines: {node: '>=6'}
     hasBin: true
     dev: true
-
-  /jwt-decode@3.1.2:
-    resolution: {integrity: sha512-UfpWE/VZn0iP50d8cz9NrZLM9lSWhcJ+0Gt/nm4by88UL+J1SiKN8/5dkjMmbEzwL2CAe+67GsegCbIKtbp75A==}
-    dev: false
 
   /kleur@3.0.3:
     resolution: {integrity: sha512-eTIzlVOSUR+JxdDFepEYcBMtZ9Qqdef+rnzWdRZuMbOywu5tO2w2N7rqjoANZ5k9vywhL6Br1VRjUIgTQx4E8w==}

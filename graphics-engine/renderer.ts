@@ -49,7 +49,11 @@ export class Renderer {
     return mat4.clone(this.projectionMatrix);
   }
 
-  public setProjectionMatrix(camera: Camera) {
+  public setProjectionMatrix(projectionMatrix: mat4): void {
+    this.projectionMatrix = projectionMatrix;
+  }
+
+  public setProjectionMatrixByCamera(camera: Camera): void {
     const fieldOfView = 45 * Math.PI / 180;   // in radians
     const aspect = this.webGl.canvas.width / this.webGl.canvas.height
     const zNear = 0.1;

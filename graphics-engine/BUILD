@@ -15,7 +15,6 @@ ts_project(
     visibility = ["//visibility:public"],
 )
 
-
 npm_package(
     name = "pumpkinSpiceEngine",
     srcs = [
@@ -24,5 +23,37 @@ npm_package(
     ],
     include_runfiles = False,
     package = "@pumkinspicegames/pumpkinSpiceEngine",
+    visibility = ["//visibility:public"],
+)
+
+# Tests
+load("@aspect_rules_jest//jest:defs.bzl", "jest_test")
+
+jest_test(
+    name = "test",
+    config = "jest.config.mjs",
+    data = [
+        ":utilTest",
+        "babel.config.json",
+    ],
+    node_options = [
+        "--experimental-vm-modules",
+    ],
+    node_modules = "//:node_modules",
+)
+
+
+ts_project(
+    name = "utilTest",
+    srcs = glob(["**/*.spec.ts"]),
+    declaration = True,
+    transpiler = "tsc",
+    tsconfig = "//:tsconfig",
+    deps = [
+        ":graphics-engine",
+        "//:node_modules/@types/jest",
+        "//:node_modules/jest-environment-jsdom",
+        "//:node_modules/ts-jest"
+    ],
     visibility = ["//visibility:public"],
 )

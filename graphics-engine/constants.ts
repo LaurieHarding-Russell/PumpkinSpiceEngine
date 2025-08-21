@@ -1,1 +1,1 @@
-export const ZERO_VECTOR = {x: 0, y: 0, z: 0};
+export const ZERO_VECTOR = Object.freeze({x: 0, y: 0, z: 0});
