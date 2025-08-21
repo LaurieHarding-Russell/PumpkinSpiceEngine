@@ -137,18 +137,3 @@ export function wieghtedAverage(v1: Vector3, v2: Vector3, weightFirst: number) {
         z: v1.z * weightFirst + v2.z * (1 - weightFirst)
     }
 }
-
-export function lookAt(cameraLocation: Vector3, upVector: Vector3, objectLocation: Vector3): Vector3 {
-    const rotation = {x: 0, y: 0,z: 0}
-    const forwardVector = normalize(minus(cameraLocation, objectLocation));
-
-    const rightAxis = normalize(crossProduct(upVector, forwardVector));
-
-    const cameraDirection = times(upVector, -1);
-
-    rotation.x = Math.acos(dotProduct(cameraDirection, rightAxis));
-    rotation.y = Math.acos(dotProduct(cameraDirection, upVector));
-    rotation.z = Math.acos(dotProduct(cameraDirection, forwardVector));
-
-    return rotation;
-}
