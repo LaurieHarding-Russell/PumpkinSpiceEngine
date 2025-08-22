@@ -30,10 +30,26 @@ def write_some_data(context, filepath, use_some_setting):
     bpy.ops.object.mode_set(mode = 'OBJECT')
     
     mesh = object.to_mesh()
-    out.write('vertices: \n')
-    for vert in mesh.vertices:
-        out.write( '%f %f %f\n' % (vert.co.x, vert.co.y, vert.co.z) )
+    writeVertices(out, mesh)
     
+    writeFacesAndNormals(out, mesh)
+    
+    writeTextureCoordinates(out, object, mesh)
+            
+            
+    return {'FINISHED'}
+
+def writeTextureCoordinates(out, object, mesh):
+    out.write('textureCoordinates: \n')
+    
+    for face in mesh.polygons:
+        for vert_idx, loop_idx in zip(face.vertices, face.loop_indices):
+            uv_coords = object.data.uv_layers.active.data[loop_idx].uv
+            print(face.index, vert_idx)
+            print(object.data.uv_layers.active.data);
+            out.write( '%i %i %f %f\n' % (face.index, vert_idx, uv_coords.x, uv_coords.y) )
+
+def writeFacesAndNormals(out, mesh):
     out.write('faces: \n')
     normals = []
     for face in mesh.polygons:
@@ -45,20 +61,14 @@ def write_some_data(context, filepath, use_some_setting):
     out.write('normals: \n')
     for normal in normals:
         out.write( '%f %f %f\n' % (normal.x, normal.y, normal.z) )
-    
-    out.write('textureCoordinates: \n')
-    
-    for polygon in  bpy.context.view_layer.objects.active.data.polygons:
-        for vert_idx, loop_idx in zip(face.vertices, face.loop_indices):
-            uv_coords = object.data.uv_layers.active.data[loop_idx].uv
-            out.write( '%i %i %f %f\n' % (polygon.index, vert_idx, uv_coords.x, uv_coords.y) )
-            
-            
-    return {'FINISHED'}
+
+def writeVertices(out, mesh):
+    out.write('vertices: \n')
+    for vert in mesh.vertices:
+        out.write( '%f %f %f\n' % (vert.co.x, vert.co.y, vert.co.z) )
 
 
 class ExportSomeData(Operator, ExportHelper):
-    """Lauire's custom game format"""
     bl_idname = "export_test.some_data"  # important since its how bpy.ops.import_test.some_data is constructed
     bl_label = "Export Some Data"
 

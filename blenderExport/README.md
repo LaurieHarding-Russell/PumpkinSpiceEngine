@@ -6,3 +6,6 @@
 3. Load exportScript.py.
 4. Select Object you wish to export.
 5. Press the play button to run the script.
+
+# TODO:
+setup unit tests.

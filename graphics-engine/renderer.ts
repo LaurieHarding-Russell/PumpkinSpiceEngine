@@ -35,7 +35,6 @@ export class Renderer {
   }
 
   public addShader(shaderName: string, source: {vectorSource: string, fragSource: string}): void {
-    console.log("test")
     if (shaderName == ShadersType.main) {
       throw "Can't override main shader";
     }
@@ -89,12 +88,7 @@ export class Renderer {
     );
   }
 
-
-  public renderMain(location: Vector3, modelReference: ModelReference) { 
-    this.renderMainR(location, {x:0, y:0, z:0}, modelReference);
-  }
-
-  public renderMainR(location: Vector3, rotation: Vector3, modelReference: ModelReference) {
+  public renderMain(location: Vector3, rotation: Vector3, modelReference: ModelReference) {
     let programInfo = this.shaderPrograms.get(modelReference.shader)!;
     this.useShaderProgram(modelReference.shader);
     this.webGl.uniformMatrix4fv(
