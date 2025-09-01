@@ -1,7 +1,6 @@
 import { Renderer } from '@pumkinspicegames/pumpkinSpiceEngine/renderer';
 import { Vector3 } from "@pumkinspicegames/pumpkinSpiceEngine/model/vector";
-import { BufferFactory, tileModalReference } from "@pumkinspicegames/pumpkinSpiceEngine/buffer-factory";
-import { ShadersType } from "@pumkinspicegames/pumpkinSpiceEngine/model/model-reference";
+import { BufferFactory } from "@pumkinspicegames/pumpkinSpiceEngine/buffer-factory";
 import { ModelResources } from './models';
 import { wavyFragmentSource, wavyVectorSource } from './custom-shaders';
 
@@ -60,9 +59,9 @@ setTimeout(() => {
                 gameWindow.width = window.innerWidth
                 gameWindow.height = window.innerHeight
 
-                renderer.setProjectionMatrix(camera);
+                renderer.setProjectionMatrixByCamera(camera);
 
-                renderer.renderMain(position, 
+                renderer.renderMain(position, { x:0,y: 0, z:0 },
                     bufferFactory.modelReferences.get("Cube")!
                 );
             }, 33)

@@ -75,7 +75,7 @@ setTimeout(() => {
                 renderer.setProjectionMatrix(lookAtPerspective(camera, {x: 0, y:0, z: 20}, {x: 0, y:1, z: 0}, getPerspective(webGl)));
                 // renderer.setProjectionMatrixByCamera(camera);
 
-                renderer?.renderMain({x: 0, y:0, z: 20},
+                renderer?.renderMain({x: 0, y:0, z: 20}, {x: 0,y: 0, z: 0},
                     bufferFactory.modelReferences.get("Cube")!
                 );
 

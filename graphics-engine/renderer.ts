@@ -5,6 +5,7 @@ import { Vector3 } from './model/vector';
 import { Camera } from './model/camera';
 import { openGlInitRenderer, ShaderProgramInfo } from './load-shader';
 import { phongVectorSource, phongFragmentSource } from "./shaders/phong-blin";
+import { cameraBasedProjection } from './util';
 
 export class Renderer {
 
@@ -32,7 +33,7 @@ export class Renderer {
     this.setOpenGlDefaults();
 
     this.shaderPrograms.set(ShadersType.main, openGlInitRenderer(this.webGl, this.buffers, phongVectorSource, phongFragmentSource));
-  }
+   }
 
   public addShader(shaderName: string, source: {vectorSource: string, fragSource: string}): void {
     if (shaderName == ShadersType.main) {
@@ -53,39 +54,7 @@ export class Renderer {
   }
 
   public setProjectionMatrixByCamera(camera: Camera): void {
-    const fieldOfView = 45 * Math.PI / 180;   // in radians
-    const aspect = this.webGl.canvas.width / this.webGl.canvas.height
-    const zNear = 0.1;
-    const zFar = 100.0;
-
-    mat4.perspective(this.projectionMatrix,
-        fieldOfView,
-        aspect,
-        zNear,
-        zFar);
-
-    mat4.translate(
-      this.projectionMatrix,
-      this.projectionMatrix,
-      [-camera.position.x, -camera.position.y, camera.position.z]);
-      
-    mat4.rotateX(
-      this.projectionMatrix,
-      this.projectionMatrix,
-      camera.rotation.x
-    );
-
-    mat4.rotateY(
-      this.projectionMatrix,
-      this.projectionMatrix,
-      camera.rotation.y
-    );
-
-    mat4.rotateZ(
-      this.projectionMatrix,
-      this.projectionMatrix,
-      camera.rotation.z
-    );
+    this.projectionMatrix = cameraBasedProjection(camera, this.webGl)
   }
 
   public renderMain(location: Vector3, rotation: Vector3, modelReference: ModelReference) {

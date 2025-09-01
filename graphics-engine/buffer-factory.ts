@@ -17,6 +17,7 @@ export const VALUES_PER_JOINT_WEIGHT = 3;
 export const bufferStride = (VALUES_PER_VERT + VALUES_PER_NORMAL + VALUES_PER_TEXTURE_COORDINATES + VALUES_PER_JOINT_WEIGHT + VALUES_PER_JOINT_ID) * Float32Array.BYTES_PER_ELEMENT;
 
 
+
 export class BufferFactory {
 
     private models: Array<ModelInfo> = [];
@@ -47,13 +48,25 @@ export class BufferFactory {
     }
 
     public create(gl: WebGL2RenderingContext): Buffers {
+        let arrayOfAll: Array<number> = this.createInterleavingArray();
 
         const generalBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, generalBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER,
+            new Float32Array(arrayOfAll),
+            gl.STATIC_DRAW);
+
+        return {
+            general: generalBuffer
+          };
+    }
+
+    private createInterleavingArray() {
         let arrayOfAll: Array<number> = [];
         for (let model of this.models) {
-            for(let i = 0; i < model.faces.length; i++) {
-                for (let j = 0; j !=3; j++) { // Assuuming triangles rule the world
-                    let normalLocation = Math.floor(i/3);
+            for (let i = 0; i < model.faces.length; i++) {
+                for (let j = 0; j != 3; j++) { // Assuuming triangles rule the world
+                    let normalLocation = Math.floor(i / 3);
                     let vertPos = model.faces[i][j];
                     arrayOfAll.push(...model.verts[vertPos]);
 
@@ -62,15 +75,16 @@ export class BufferFactory {
                     if (model.textureCoordinates.has(i)) {
                         arrayOfAll.push(...model.textureCoordinates.get(i)![j].textureLocation);
                     } else {
-                        console.warn("uh, oh, model has no UV's!")
-                        arrayOfAll.push(0,0);
+                        console.warn("uh, oh, model has no UV's!");
+                        arrayOfAll.push(0, 0);
                     }
 
-                    let numericIds: Array<number> = [0,0,0];
-                    let jointWeights: Array<number> = [1,0,0];
+                    let numericIds: Array<number> = [0, 0, 0];
+                    let jointWeights: Array<number> = [1, 0, 0];
+                    
                     model.jointIds[j].forEach(jointName => {
                         numericIds.push(model.jointIdToNumber.get(jointName)!);
-                    })
+                    });
                     for (let jointWeightId = 0; jointWeightId != model.jointWeights[j].length; jointWeightId++) {
                         if (model.jointWeights[jointWeightId]) {
                             jointWeights[jointWeightId] = model.jointWeights[j][jointWeightId];
@@ -82,15 +96,6 @@ export class BufferFactory {
                 }
             }
         }
-
-        gl.bindBuffer(gl.ARRAY_BUFFER, generalBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER,
-            new Float32Array(arrayOfAll),
-            gl.STATIC_DRAW);
-
-        return {
-            general: generalBuffer
-          };
+        return arrayOfAll;
     }
-
 }

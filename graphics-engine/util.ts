@@ -197,3 +197,44 @@ export function radiansToDegrees(radians: number) {
     return radians * (180 / Math.PI);
 }
 
+
+export function cameraBasedProjection(camera: Camera, webGl: WebGL2RenderingContext) {
+
+    let projectionMatrix = mat4.create();
+
+    const fieldOfView = 45 * Math.PI / 180;   // in radians
+    const aspect = webGl.canvas.width / webGl.canvas.height
+    const zNear = 0.1;
+    const zFar = 100.0;
+
+    mat4.perspective(projectionMatrix,
+        fieldOfView,
+        aspect,
+        zNear,
+        zFar);
+
+    mat4.translate(
+      projectionMatrix,
+      projectionMatrix,
+      [-camera.position.x, -camera.position.y, camera.position.z]);
+      
+    mat4.rotateX(
+      projectionMatrix,
+      projectionMatrix,
+      camera.rotation.x
+    );
+
+    mat4.rotateY(
+      projectionMatrix,
+      projectionMatrix,
+      camera.rotation.y
+    );
+
+    mat4.rotateZ(
+      projectionMatrix,
+      projectionMatrix,
+      camera.rotation.z
+    );
+
+    return projectionMatrix;
+}

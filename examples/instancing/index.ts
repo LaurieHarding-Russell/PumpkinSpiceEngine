@@ -58,9 +58,10 @@ setTimeout(() => {
                 gameWindow.width = window.innerWidth
                 gameWindow.height = window.innerHeight
 
-                renderer.setProjectionMatrix(camera);
+                renderer.setProjectionMatrixByCamera(camera);
 
                 renderer?.renderMain(position, 
+                    { x: 0, y: 0, z:0 },
                     bufferFactory.modelReferences.get("Cube")!
                 );
             }, 33)
