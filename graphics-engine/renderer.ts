@@ -21,7 +21,11 @@ export class Renderer {
 
   private buffers!: Buffers;
     
-  public constructor(webGl: WebGL2RenderingContext) {
+  public constructor(webGl?: WebGL2RenderingContext) {
+    this.webGl = webGl as WebGL2RenderingContext; // HACK: think about this
+  }
+
+  public setWebGl(webGl: WebGL2RenderingContext) {
     this.webGl = webGl;
   }
 
