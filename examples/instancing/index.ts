@@ -1,113 +1,144 @@
 import { Renderer } from '@pumkinspicegames/pumpkinSpiceEngine/renderer';
-import { Vector3 } from "@pumkinspicegames/pumpkinSpiceEngine/model/vector";
-import { BufferFactory, tileModalReference } from "@pumkinspicegames/pumpkinSpiceEngine/buffer-factory";
-import { ShadersType } from "@pumkinspicegames/pumpkinSpiceEngine/model/model-reference";
-import { ModelResources } from './models';
+import { identityMatrix } from '@pumkinspicegames/pumpkinSpiceEngine/util';
+import { initShaderProgram } from '@pumkinspicegames/pumpkinSpiceEngine/load-shader';
 
-const maxZoom = -1;
-const minZoom = -20;
-
-var map: Array<string> = ["1"];
-var selectedType = '0';
+import { mat4 } from 'gl-matrix';
+import { fragmentInstancing, vectorInstancing } from './custom-shaders';
 
 
-var renderer: Renderer;
-let position:Vector3 = {
-    x: 0,
-    y: 0,
-    z: 0
-}
-let camera = {
-    position: {
-        x: 0,
-        y: 0,
-        z: -20
-    }, 
-    rotation: {
-        x: 0,
-        y: 0,
-        z: 0
-    }
-}
 
-// FIXME, time hack
-setTimeout(() => {
+// declare var webglUtils: any;
 
-    initializeMovementListeners();
+function main() {
+    const gameWindow: HTMLCanvasElement = document.querySelector('#canvas')!;
+    const webGl: WebGL2RenderingContext = gameWindow.getContext("webgl2")!;
 
-    const gameWindow: HTMLCanvasElement | null = document.querySelector("#screen")    
+    const program = initShaderProgram(
+        webGl, vectorInstancing, fragmentInstancing);
 
-    if (gameWindow == null) {
-        throw "couldn't find things and magic and stuff";
-    }
+  const positionLoc = webGl.getAttribLocation(program, 'a_position');
+  const colorLoc = webGl.getAttribLocation(program, 'color');
+  const matrixLoc = webGl.getAttribLocation(program, 'matrix');
 
-    const webGl: WebGL2RenderingContext | null = gameWindow.getContext("webgl2");
-    if (webGl == null) throw "oh no! uggg";
+  const positionBuffer = webGl.createBuffer();
+  webGl.bindBuffer(webGl.ARRAY_BUFFER, positionBuffer);
+  webGl.bufferData(webGl.ARRAY_BUFFER, new Float32Array([
+      -0.1,  0.4,
+      -0.1, -0.4,
+       0.1, -0.4,
+       0.1, -0.4,
+      -0.1,  0.4,
+       0.1,  0.4,
+       0.4, -0.1,
+      -0.4, -0.1,
+      -0.4,  0.1,
+      -0.4,  0.1,
+       0.4, -0.1,
+       0.4,  0.1,
+    ]), webGl.STATIC_DRAW);
+  const numVertices = 12;
 
-    let modelResources = new ModelResources();
-    modelResources.load().then(() => {
-      let bufferFactory = new BufferFactory();
-      bufferFactory
-        .addModel("Cube", modelResources.cube, ShadersType.main)
-        .defaultSkin = modelResources.defaultSkin;
+  // setup matrices, one per instance
+  const numInstances = 5;
+  // make a typed array with one view per matrix
+  const matrixData = new Float32Array(numInstances * 16);
+  const matrices: Array<mat4> = [];
+  for (let i = 0; i < numInstances; ++i) {
+    const byteOffsetToMatrix = i * 16 * 4;
+    const numFloatsForView = 16;
+    matrices.push(new Float32Array(
+        matrixData.buffer,
+        byteOffsetToMatrix,
+        numFloatsForView));
+  }
 
-        renderer = new Renderer(webGl);
-        renderer.start(bufferFactory).then(() => {
-            // FIXME, loading
-            setInterval(() => {
-                gameWindow.width = window.innerWidth
-                gameWindow.height = window.innerHeight
+  const matrixBuffer = webGl.createBuffer();
+  webGl.bindBuffer(webGl.ARRAY_BUFFER, matrixBuffer);
+  // just allocate the buffer
+  webGl.bufferData(webGl.ARRAY_BUFFER, matrixData.byteLength, webGl.DYNAMIC_DRAW);
 
-                renderer.setProjectionMatrixByCamera(camera);
+  // setup colors, one per instance
+  const colorBuffer = webGl.createBuffer();
+  webGl.bindBuffer(webGl.ARRAY_BUFFER, colorBuffer);
+  webGl.bufferData(webGl.ARRAY_BUFFER,
+      new Float32Array([
+          1, 0, 0, 1,  // red
+          0, 1, 0, 1,  // green
+          0, 0, 1, 1,  // blue
+          1, 0, 1, 1,  // magenta
+          0, 1, 1, 1,  // cyan
+        ]),
+      webGl.STATIC_DRAW);
 
-                renderer?.renderMain(position, 
-                    { x: 0, y: 0, z:0 },
-                    bufferFactory.modelReferences.get("Cube")!
-                );
-            }, 33)
-        });
-    });
-}, 1000);
+  function render(time: number) {
+    time *= 0.001; // seconds
 
-function initializeMovementListeners() {
-    document.addEventListener('keydown', (event: KeyboardEvent) => {
-
-        if (event.key == '8') {
-            camera.rotation.x += 0.1;
-        }
-
-        if (event.key == '2') {
-            camera.rotation.x -= 0.1;
-        }
-
-        if (event.key == '4') {
-            camera.rotation.z -= 0.1;
-        }
-
-        if (event.key == '6') {
-            camera.rotation.z += 0.1;
-        }
-
-        if (event.key == 'a') {
-            camera.position.x += 0.1;
-        }
-
-        if (event.key == 'd') {
-            camera.position.x -= 0.1;
-        }
-
-        if (event.key == 'w') {
-            camera.position.y -= 0.1;
-        }
-
-        if (event.key == 's') {
-            camera.position.y += 0.1;
-        }
-    }, false);
     
-    document.onwheel = (event: WheelEvent) => {
-        event.preventDefault();
-        camera.position.z += event.deltaY * -0.01;
-        camera.position.z = Math.min(Math.max(minZoom, camera.position.z), 0);
+    gameWindow.width = window.innerWidth
+    gameWindow.height = window.innerHeight
+
+    // Tell WebGL how to convert from clip space to pixels
+    webGl.viewport(0, 0, webGl.canvas.width, webGl.canvas.height);
+
+    webGl.useProgram(program);
+
+    webGl.bindBuffer(webGl.ARRAY_BUFFER, positionBuffer);
+    webGl.enableVertexAttribArray(positionLoc);
+    webGl.vertexAttribPointer(positionLoc, 2, webGl.FLOAT, false, 0, 0);
+
+    // update all the matrices
+    matrices.forEach((mat, ndx) => {
+        mat4.translate(
+            mat,
+            identityMatrix(),
+            [-0.5 + ndx * 0.25, 0, 0]
+        );
+        mat4.rotateZ(
+            mat,
+            mat,
+            time * (0.1 + 0.1 * ndx)
+        );
+    });
+
+    // upload the new matrix data
+    webGl.bindBuffer(webGl.ARRAY_BUFFER, matrixBuffer);
+    webGl.bufferSubData(webGl.ARRAY_BUFFER, 0, matrixData);
+
+    // set all 4 attributes for matrix
+    const bytesPerMatrix = 4 * 16;
+    for (let i = 0; i < 4; ++i) {
+      const loc = matrixLoc + i;
+      webGl.enableVertexAttribArray(loc);
+      // note the stride and offset
+      const offset = i * 16;  // 4 floats per row, 4 bytes per float
+      webGl.vertexAttribPointer(
+          loc,              // location
+          4,                // size (num values to pull from buffer per iteration)
+          webGl.FLOAT,         // type of data in buffer
+          false,            // normalize
+          bytesPerMatrix,   // stride, num bytes to advance to get to next set of values
+          offset,           // offset in buffer
+      );
+      // this line says this attribute only changes for each 1 instance
+      webGl.vertexAttribDivisor(loc, 1);
     }
+
+    // set attribute for color
+    webGl.bindBuffer(webGl.ARRAY_BUFFER, colorBuffer);
+    webGl.enableVertexAttribArray(colorLoc);
+    webGl.vertexAttribPointer(colorLoc, 4, webGl.FLOAT, false, 0, 0);
+    // this line says this attribute only changes for each 1 instance
+    webGl.vertexAttribDivisor(colorLoc, 1);
+
+    webGl.drawArraysInstanced(
+      webGl.TRIANGLES,
+      0,             // offset
+      numVertices,   // num vertices per instance
+      numInstances,  // num instances
+    );
+    requestAnimationFrame(render);
+  }
+  requestAnimationFrame(render);
 }
+
+main();

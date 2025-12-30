@@ -43,7 +43,7 @@ setTimeout(() => {
     }
 
     const webGl: WebGL2RenderingContext | null = gameWindow.getContext("webgl2");
-    if (webGl == null) throw "oh no! uggg";
+    if (webGl == null) throw new Error("oh no! uggg");
 
     let modelResources = new ModelResources();
     modelResources.load().then(() => {

@@ -1,19 +1,18 @@
-<!doctype html>
-
-<html>
-  <head>
-    <title>Model viewer</title>
-    <script src="./bundle.js"></script>
-    <link rel="stylesheet" href="base.css">
-  </head>
-  <body>
-    <div class="control-bar">
-      <span>Viewer<span>
-        <!-- TODO let user change model -->
-    </div>
-    <div class="container">
-      <canvas id="screen" width="1440" height="1080">
-      </canvas>
-    </div>
-  </body>
-</html>
+<!DOCTYPE html>
+<head>
+    <style>
+        @import url("https://webglfundamentals.org/webgl/resources/webgl-tutorials.css");
+        body {
+        margin: 0;
+        }
+        canvas {
+        width: 100vw;
+        height: 100vh;
+        display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script type="module" src="./bundle.js"></script>
+</body>

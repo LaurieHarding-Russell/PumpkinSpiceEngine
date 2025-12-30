@@ -197,6 +197,12 @@ export function radiansToDegrees(radians: number) {
     return radians * (180 / Math.PI);
 }
 
+export function identityMatrix(): mat4 {
+    let identity = mat4.create();
+    mat4.identity(identity);
+    return identity;
+}
+
 
 export function cameraBasedProjection(camera: Camera, webGl: WebGL2RenderingContext) {
 
