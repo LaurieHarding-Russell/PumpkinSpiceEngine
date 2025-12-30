@@ -61,7 +61,7 @@ export class BufferFactory {
           };
     }
 
-    private createInterleavingArray() {
+    private createInterleavingArray(): Array<number> {
         let arrayOfAll: Array<number> = [];
         for (let model of this.models) {
             for (let i = 0; i < model.faces.length; i++) {
