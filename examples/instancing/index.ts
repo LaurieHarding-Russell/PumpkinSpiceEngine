@@ -66,11 +66,7 @@ function main() {
                 gameWindow.height = window.innerHeight
 
                 renderer.setProjectionMatrix(lookAtPerspective(camera, {x: 0, y:0, z: 20}, {x: 0, y:1, z: 0}, getPerspective(webGl)))
-                // renderer.setProjectionMatrixByCamera(camera);
-                // for(let i = 0; i < locations.length; i++) {
-                //     renderer.renderMain(locations[i], rotations[i], bufferFactory.modelReferences.get("Cube")!)
-                // }
-            
+
                 renderer.renderMultiple(locations, rotations, bufferFactory.modelReferences.get("Cube")!)
                 requestAnimationFrame(render);
             }
