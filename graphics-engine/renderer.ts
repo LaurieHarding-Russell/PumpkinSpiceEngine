@@ -5,7 +5,7 @@ import { Vector3 } from './model/vector';
 import { Camera } from './model/camera';
 import { openGlInitRenderer, ShaderProgramInfo } from './load-shader';
 import { phongVectorSource, phongFragmentSource } from "./shaders/phong-blin";
-import { cameraBasedProjection } from './util';
+import { cameraBasedProjection, matrixFromLocationRotation } from './util';
 
 export class Renderer {
 
@@ -84,22 +84,32 @@ export class Renderer {
         this.projectionMatrix);
       
 
-    let modelViews: Array<mat4> = [];
-    // FIXME util.
-    let numInstances = locations.length;
-    for (let i = 0; i != numInstances; i++) {
-      modelViews.push(this.matrixFromLocationRotation(locations[i], rotations[i]));
-    }
+    let modelViews: Array<mat4> = this.toModelViews(locations, rotations);
+    let numInstances = modelViews.length;
+    
+    this.setupModelViewBuffer(modelViews, programInfo);
 
+
+    this.setTexture(modelReference, programInfo);
+    this.setNormal(programInfo);
+
+
+    this.webGl.drawArraysInstanced(
+        this.webGl.TRIANGLES,
+        modelReference.offset, 
+        modelReference.numberOfVerts,
+        numInstances
+    );
+  }
+
+  private setupModelViewBuffer(modelViews: Array<mat4>, programInfo: ShaderProgramInfo) {
+    let numInstances = modelViews.length;
     
     const matrixBuffer = this.webGl.createBuffer(); // probably expensive...
-
-
     let modelViewAttributeLocation = this.webGl.getAttribLocation(programInfo.program, 'modelview')
     this.webGl.bufferData(this.webGl.ARRAY_BUFFER, modelViews.length * 16, this.webGl.DYNAMIC_DRAW);
     this.webGl.bindBuffer(this.webGl.ARRAY_BUFFER, matrixBuffer);
     let bufferData = new Float32Array(modelViews.map(a => [...a]).flat()); // FIXME, better typing 
-    console.log(bufferData);
     this.webGl.bufferData(this.webGl.ARRAY_BUFFER, bufferData, this.webGl.STATIC_DRAW);
 
     // set all 4 attributes for matrix
@@ -120,18 +130,14 @@ export class Renderer {
         // this line says this attribute only changes for each 1 instance
         this.webGl.vertexAttribDivisor(loc, 1);
     }
+  }
 
-
-    this.setTexture(modelReference, programInfo);
-    this.setNormal(programInfo);
-
-
-    this.webGl.drawArraysInstanced(
-        this.webGl.TRIANGLES,
-        modelReference.offset, 
-        modelReference.numberOfVerts,
-        numInstances
-    );
+  private toModelViews(locations: Array<Vector3>, rotations: Array<Vector3>): Array<mat4> {
+    let modelViews: Array<mat4> = [];
+    for (let i = 0; i != locations.length; i++) {
+      modelViews.push(matrixFromLocationRotation(locations[i], rotations[i]));
+    }
+    return modelViews;
   }
 
   private setOpenGlDefaults() {
@@ -143,37 +149,12 @@ export class Renderer {
 
 
   private setModelView(location: Vector3, rotation: Vector3, programInfo: ShaderProgramInfo) {
-    const modelViewMatrix = this.matrixFromLocationRotation(location, rotation);
+    const modelViewMatrix = matrixFromLocationRotation(location, rotation);
 
     this.webGl.uniformMatrix4fv(
       programInfo.uniformLocations.modelViewMatrix,
       false,
       modelViewMatrix);
-  }
-
-  // FIXME, move to util.
-  private matrixFromLocationRotation(location: Vector3, rotation: Vector3): mat4 {
-    let matrix = mat4.create();
-    mat4.translate(
-      matrix, // destination matrix
-      matrix, // matrix to translate
-      [location.x, location.y, location.z]); // amount to translate
-    mat4.rotateX(
-      matrix,
-      matrix,
-      rotation.x
-    )
-    mat4.rotateY(
-      matrix,
-      matrix,
-      rotation.y
-    )
-    mat4.rotateZ(
-      matrix,
-      matrix,
-      rotation.z
-    )
-    return matrix;
   }
 
   private setNormal(programInfo: ShaderProgramInfo) {

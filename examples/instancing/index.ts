@@ -46,7 +46,7 @@ function main() {
             initializeMovementListeners();
             renderer.addShader("INSTANCE", {vectorSource: vectorInstancing, fragSource: fragmentInstancing});
             // setup matrices, one per instance
-            const numInstances = 5;
+            const numInstances = 50;
             // make a typed array with one view per matrix
             const matrixData = new Float32Array(numInstances * 16);
             const locations: Array<Vector3> = [];
@@ -66,7 +66,10 @@ function main() {
                 gameWindow.height = window.innerHeight
 
                 renderer.setProjectionMatrix(lookAtPerspective(camera, {x: 0, y:0, z: 20}, {x: 0, y:1, z: 0}, getPerspective(webGl)))
-
+                // for(let i = 0; i < locations.length; i++) {
+                //     renderer.renderMain(locations[i], rotations[i], bufferFactory.modelReferences.get("Cube")!)
+                // }
+            
                 renderer.renderMultiple(locations, rotations, bufferFactory.modelReferences.get("Cube")!)
                 requestAnimationFrame(render);
             }
