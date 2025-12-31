@@ -150,6 +150,7 @@ export function getPerspective(webGl: WebGL2RenderingContext): mat4 {
     return projectionMatrix;
 }
 
+
 // Note: Up vector should not be parrellel to the forward vector
 export function lookAtPerspective(camera: Camera, lookAtObject: Vector3, tempUpVector: Vector3, projectionMatrix: mat4): mat4 {
     const newProjectionMatrix = mat4.clone(projectionMatrix);
@@ -196,6 +197,36 @@ export function lookAtPerspective(camera: Camera, lookAtObject: Vector3, tempUpV
 export function radiansToDegrees(radians: number) {
     return radians * (180 / Math.PI);
 }
+
+export function identityMatrix(): mat4 {
+    let identity = mat4.create();
+    mat4.identity(identity);
+    return identity;
+}
+
+export function matrixFromLocationRotation(location: Vector3, rotation: Vector3): mat4 {
+    let matrix = mat4.create();
+    mat4.translate(
+      matrix, // destination matrix
+      matrix, // matrix to translate
+      [location.x, location.y, location.z]); // amount to translate
+    mat4.rotateX(
+      matrix,
+      matrix,
+      rotation.x
+    )
+    mat4.rotateY(
+      matrix,
+      matrix,
+      rotation.y
+    )
+    mat4.rotateZ(
+      matrix,
+      matrix,
+      rotation.z
+    )
+    return matrix;
+  }
 
 
 export function cameraBasedProjection(camera: Camera, webGl: WebGL2RenderingContext) {

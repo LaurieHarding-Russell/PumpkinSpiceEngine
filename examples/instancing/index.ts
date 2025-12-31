@@ -1,27 +1,24 @@
 import { Renderer } from '@pumkinspicegames/pumpkinSpiceEngine/renderer';
-import { Vector3 } from "@pumkinspicegames/pumpkinSpiceEngine/model/vector";
-import { BufferFactory, tileModalReference } from "@pumkinspicegames/pumpkinSpiceEngine/buffer-factory";
-import { ShadersType } from "@pumkinspicegames/pumpkinSpiceEngine/model/model-reference";
+
+import { fragmentInstancing, vectorInstancing } from './custom-shaders';
 import { ModelResources } from './models';
+import { BufferFactory } from '@pumkinspicegames/pumpkinSpiceEngine/buffer-factory';
+import { Vector3 } from '@pumkinspicegames/pumpkinSpiceEngine/model/vector';
+import { ShadersType } from '@pumkinspicegames/pumpkinSpiceEngine/model/model-reference';
+import { lookAtPerspective, getPerspective } from "@pumkinspicegames/pumpkinSpiceEngine/util";
 
 const maxZoom = -1;
 const minZoom = -20;
 
-var map: Array<string> = ["1"];
-var selectedType = '0';
 
 
-var renderer: Renderer;
-let position:Vector3 = {
-    x: 0,
-    y: 0,
-    z: 0
-}
+var renderer: Renderer = new Renderer();
+
 let camera = {
     position: {
         x: 0,
         y: 0,
-        z: -20
+        z: 0
     }, 
     rotation: {
         x: 0,
@@ -30,48 +27,61 @@ let camera = {
     }
 }
 
-// FIXME, time hack
-setTimeout(() => {
-
-    initializeMovementListeners();
-
-    const gameWindow: HTMLCanvasElement | null = document.querySelector("#screen")    
-
-    if (gameWindow == null) {
-        throw "couldn't find things and magic and stuff";
-    }
-
-    const webGl: WebGL2RenderingContext | null = gameWindow.getContext("webgl2");
-    if (webGl == null) throw "oh no! uggg";
+function main() {
+    const gameWindow: HTMLCanvasElement = document.querySelector("#screen")!;
+    const webGl: WebGL2RenderingContext = gameWindow.getContext("webgl2")!;
 
     let modelResources = new ModelResources();
     modelResources.load().then(() => {
-      let bufferFactory = new BufferFactory();
-      bufferFactory
-        .addModel("Cube", modelResources.cube, ShadersType.main)
-        .defaultSkin = modelResources.defaultSkin;
 
-        renderer = new Renderer(webGl);
+        let bufferFactory = new BufferFactory();
+        bufferFactory
+            // .addModel("Cube", modelResources.cube, ShadersType.main)
+            .addModel("Cube", modelResources.cube, "INSTANCE")
+            .defaultSkin = modelResources.defaultSkin;
+
+        renderer.setWebGl(webGl);
+
         renderer.start(bufferFactory).then(() => {
-            // FIXME, loading
-            setInterval(() => {
+            initializeMovementListeners();
+            renderer.addShader("INSTANCE", {vectorSource: vectorInstancing, fragSource: fragmentInstancing});
+            // setup matrices, one per instance
+            const numInstances = 50;
+            // make a typed array with one view per matrix
+            const matrixData = new Float32Array(numInstances * 16);
+            const locations: Array<Vector3> = [];
+            const rotations: Array<Vector3> = [];
+            
+            for (let i = 0; i < numInstances; ++i) {
+                locations.push({x: i * 3.0, y: 0, z: 20.0});
+                rotations.push({x:0, y: 0 ,z: 0});
+            }
+
+            // setup colors, one per instance
+            const colorBuffer = webGl.createBuffer();
+            webGl.bindBuffer(webGl.ARRAY_BUFFER, colorBuffer);
+
+            let render = () => {
                 gameWindow.width = window.innerWidth
                 gameWindow.height = window.innerHeight
 
-                renderer.setProjectionMatrixByCamera(camera);
-
-                renderer?.renderMain(position, 
-                    { x: 0, y: 0, z:0 },
-                    bufferFactory.modelReferences.get("Cube")!
-                );
-            }, 33)
+                renderer.setProjectionMatrix(lookAtPerspective(camera, {x: 0, y:0, z: 20}, {x: 0, y:1, z: 0}, getPerspective(webGl)))
+                // for(let i = 0; i < locations.length; i++) {
+                //     renderer.renderMain(locations[i], rotations[i], bufferFactory.modelReferences.get("Cube")!)
+                // }
+            
+                renderer.renderMultiple(locations, rotations, bufferFactory.modelReferences.get("Cube")!)
+                requestAnimationFrame(render);
+            }
+            requestAnimationFrame(render);
         });
     });
-}, 1000);
+}
+
+
 
 function initializeMovementListeners() {
     document.addEventListener('keydown', (event: KeyboardEvent) => {
-
         if (event.key == '8') {
             camera.rotation.x += 0.1;
         }
@@ -103,6 +113,15 @@ function initializeMovementListeners() {
         if (event.key == 's') {
             camera.position.y += 0.1;
         }
+
+        if (event.key == 'z') {
+            camera.position.z += 0.1;
+        }
+
+        if (event.key == 'x') {
+            camera.position.z -= 0.1;
+        }
+
     }, false);
     
     document.onwheel = (event: WheelEvent) => {
@@ -111,3 +130,8 @@ function initializeMovementListeners() {
         camera.position.z = Math.min(Math.max(minZoom, camera.position.z), 0);
     }
 }
+
+// FIXME, time hack
+setTimeout(() => {
+    main();
+});

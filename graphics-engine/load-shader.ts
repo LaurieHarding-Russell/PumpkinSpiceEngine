@@ -56,7 +56,7 @@ export function openGlInitRenderer(webGl: WebGL2RenderingContext, buffers: Buffe
     return programInfo;
 }
 
-function initShaderProgram(gl: WebGL2RenderingContext, vsSource: string, fsSource: string): WebGLProgram {
+export function initShaderProgram(gl: WebGL2RenderingContext, vsSource: string, fsSource: string): WebGLProgram {
   const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource);
   const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
 
@@ -67,7 +67,7 @@ function initShaderProgram(gl: WebGL2RenderingContext, vsSource: string, fsSourc
 
   if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
     alert('Unable to initialize the shader program: ' + gl.getProgramInfoLog(shaderProgram));
-    throw "Could not initialize shader";
+    throw new Error("Could not initialize shader");
   }
 
   return shaderProgram;
@@ -81,7 +81,7 @@ function loadShader(gl: WebGL2RenderingContext, type: GLint, source: string): We
   if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
     alert('An error occurred compiling the shaders: ' + gl.getShaderInfoLog(shader));
     gl.deleteShader(shader);
-    throw "Could not load shader";
+    throw new Error("Could not load shader");
   }
 
   return shader;
