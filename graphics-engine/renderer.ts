@@ -41,10 +41,10 @@ export class Renderer {
 
   public addShader(shaderName: string, source: {vectorSource: string, fragSource: string}): void {
     if (shaderName == ShadersType.main) {
-      throw "Can't override main shader";
+      throw new Error("Can't override main shader");
     }
     if (this.buffers == null) {
-      throw "Please run start before adding a shader. Buffer undefined.";
+      throw new Error("Please run start before adding a shader. Buffer undefined.");
     }
     this.shaderPrograms.set(shaderName, openGlInitRenderer(this.webGl, this.buffers, source.vectorSource, source.fragSource));
   }
@@ -74,6 +74,66 @@ export class Renderer {
     this.webGl.drawArrays(this.webGl.TRIANGLES, modelReference.offset, modelReference.numberOfVerts);
   }
 
+  public renderMultiple(locations: Array<Vector3>, rotations: Array<Vector3>, modelReference: ModelReference) {
+    let programInfo = this.shaderPrograms.get(modelReference.shader)!;
+    this.useShaderProgram(modelReference.shader);
+
+    this.webGl.uniformMatrix4fv(
+      programInfo.uniformLocations.projectionMatrix,
+        false,
+        this.projectionMatrix);
+      
+
+    let modelViews: Array<mat4> = [];
+    // FIXME util.
+    let numInstances = locations.length;
+    for (let i = 0; i != numInstances; i++) {
+      modelViews.push(this.matrixFromLocationRotation(locations[i], rotations[i]));
+    }
+
+    
+    const matrixBuffer = this.webGl.createBuffer(); // probably expensive...
+
+
+    let modelViewAttributeLocation = this.webGl.getAttribLocation(programInfo.program, 'modelview')
+    this.webGl.bufferData(this.webGl.ARRAY_BUFFER, modelViews.length * 16, this.webGl.DYNAMIC_DRAW);
+    this.webGl.bindBuffer(this.webGl.ARRAY_BUFFER, matrixBuffer);
+    let bufferData = new Float32Array(modelViews.map(a => [...a]).flat()); // FIXME, better typing 
+    console.log(bufferData);
+    this.webGl.bufferData(this.webGl.ARRAY_BUFFER, bufferData, this.webGl.STATIC_DRAW);
+
+    // set all 4 attributes for matrix
+    const bytesPerMatrix = 4 * 16;
+    for (let i = 0; i < 4; ++i) {
+        const loc = modelViewAttributeLocation + i;
+        this.webGl.enableVertexAttribArray(loc);
+        // note the stride and offset
+        const offset = i * 16;  // 4 floats per row, 4 bytes per float
+        this.webGl.vertexAttribPointer(
+            loc,              // location
+            4,                // size (num values to pull from buffer per iteration)
+            this.webGl.FLOAT,         // type of data in buffer
+            false,            // normalize
+            bytesPerMatrix,   // stride, num bytes to advance to get to next set of values
+            offset,           // offset in buffer
+        );
+        // this line says this attribute only changes for each 1 instance
+        this.webGl.vertexAttribDivisor(loc, 1);
+    }
+
+
+    this.setTexture(modelReference, programInfo);
+    this.setNormal(programInfo);
+
+
+    this.webGl.drawArraysInstanced(
+        this.webGl.TRIANGLES,
+        modelReference.offset, 
+        modelReference.numberOfVerts,
+        numInstances
+    );
+  }
+
   private setOpenGlDefaults() {
     this.webGl.clearColor(1.0, 1.0, 1.0, 1.0);
     this.webGl.enable(this.webGl.DEPTH_TEST);
@@ -81,36 +141,39 @@ export class Renderer {
     this.webGl.clear(this.webGl.DEPTH_BUFFER_BIT);
   }
 
+
   private setModelView(location: Vector3, rotation: Vector3, programInfo: ShaderProgramInfo) {
-    const modelViewMatrix = mat4.create();
-
-    mat4.translate(
-      modelViewMatrix, // destination matrix
-      modelViewMatrix, // matrix to translate
-      [location.x, location.y, location.z]); // amount to translate
-
-    mat4.rotateX(
-      modelViewMatrix,
-      modelViewMatrix,
-      rotation.x
-    )
-
-    mat4.rotateY(
-      modelViewMatrix,
-      modelViewMatrix,
-      rotation.y
-    )
-
-    mat4.rotateZ(
-      modelViewMatrix,
-      modelViewMatrix,
-      rotation.z
-    )
+    const modelViewMatrix = this.matrixFromLocationRotation(location, rotation);
 
     this.webGl.uniformMatrix4fv(
       programInfo.uniformLocations.modelViewMatrix,
       false,
       modelViewMatrix);
+  }
+
+  // FIXME, move to util.
+  private matrixFromLocationRotation(location: Vector3, rotation: Vector3): mat4 {
+    let matrix = mat4.create();
+    mat4.translate(
+      matrix, // destination matrix
+      matrix, // matrix to translate
+      [location.x, location.y, location.z]); // amount to translate
+    mat4.rotateX(
+      matrix,
+      matrix,
+      rotation.x
+    )
+    mat4.rotateY(
+      matrix,
+      matrix,
+      rotation.y
+    )
+    mat4.rotateZ(
+      matrix,
+      matrix,
+      rotation.z
+    )
+    return matrix;
   }
 
   private setNormal(programInfo: ShaderProgramInfo) {

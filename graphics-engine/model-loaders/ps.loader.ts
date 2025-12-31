@@ -17,7 +17,7 @@ export function loadPSObject(psFile: string, texture: TexImageSource | null): Mo
 
     let lines = psFile.split("\n");
     if (lines[0] != "vertices: ") {
-        throw "Error not ps file!";
+        throw new Error("Error not ps file!");
     }
 
     // Load Vertices
