@@ -7,7 +7,6 @@ in vec2 inputUV;
 in mat4 modelview;
 
 uniform mat4 projection;
-uniform mat4 normalMat;
 
 out vec3 normalInterp;
 out vec3 vertPos;
@@ -18,7 +17,7 @@ void main() {
   vec4 vertPos4 = modelview * inputPosition;
   vertPos = vec3(vertPos4) / vertPos4.w;
 
-  normalInterp = vec3(normalMat * vec4(inputNormal, 0.0));
+  normalInterp = inputNormal;
   vTexcoord = inputUV;
 }
 `;

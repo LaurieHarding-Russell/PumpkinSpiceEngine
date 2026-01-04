@@ -18,7 +18,7 @@ void main() {
     vertPos = vec3(vertPos4) / vertPos4.w;
 
     // Identity matrix * any vector should return itself, eh?
-    normalInterp = vec3(normalMat * vec4(inputNormal, 0.0));
+    normalInterp = inputNormal;
     vTexcoord = inputUV;
 }
 `;
