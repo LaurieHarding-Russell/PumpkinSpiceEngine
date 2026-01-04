@@ -35,7 +35,6 @@ function main() {
 
         let bufferFactory = new BufferFactory();
         bufferFactory
-            .addModel("police", modelResources.police, ShadersType.main)
             .addModel("Cube", modelResources.cube, ShadersType.mainMultiple)
             .defaultSkin = modelResources.defaultSkin;
 
@@ -44,7 +43,7 @@ function main() {
         renderer.initialize(bufferFactory).then(() => {
             initializeMovementListeners();
             // setup matrices, one per instance
-            const numInstances = 5;
+            const numInstances = 50;
             // make a typed array with one view per matrix
             const matrixData = new Float32Array(numInstances * 16);
             const locations: Array<Vector3> = [];
@@ -64,13 +63,8 @@ function main() {
                 gameWindow.height = window.innerHeight
 
                 renderer.setProjectionMatrix(lookAtPerspective(camera, {x: 0, y:0, z: 20}, {x: 0, y:1, z: 0}, getPerspective(webGl)));
-                // for(let i = 0; i < locations.length; i++) {
-                    renderer.renderMain({x: 0.0, y: -6.0, z: 20.0}, {x:0, y: 0, z: 0}, bufferFactory.modelReferences.get("police")!);
-                // }
             
                 renderer.renderMultiple(locations, rotations, bufferFactory.modelReferences.get("Cube")!);
-
-                // renderer.renderMain({x: 0.0, y: 6, z: 20.0}, {x:0, y: 0, z: 0}, bufferFactory.modelReferences.get("police")!);
 
                 requestAnimationFrame(render);
             }
