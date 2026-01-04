@@ -1,11 +1,10 @@
 import { Renderer } from '@pumkinspicegames/pumpkinSpiceEngine/renderer';
 
-import { fragmentInstancing, vectorInstancing } from './custom-shaders';
 import { ModelResources } from './models';
-import { BufferFactory } from '@pumkinspicegames/pumpkinSpiceEngine/buffer-factory';
 import { Vector3 } from '@pumkinspicegames/pumpkinSpiceEngine/model/vector';
 import { ShadersType } from '@pumkinspicegames/pumpkinSpiceEngine/model/model-reference';
 import { lookAtPerspective, getPerspective } from "@pumkinspicegames/pumpkinSpiceEngine/util";
+import { BufferFactory } from '@pumkinspicegames/pumpkinSpiceEngine/shaders/buffer-factory';
 
 const maxZoom = -1;
 const minZoom = -20;
@@ -36,17 +35,16 @@ function main() {
 
         let bufferFactory = new BufferFactory();
         bufferFactory
-            // .addModel("Cube", modelResources.cube, ShadersType.main)
-            .addModel("Cube", modelResources.cube, "INSTANCE")
+            .addModel("police", modelResources.police, ShadersType.main)
+            .addModel("Cube", modelResources.cube, ShadersType.mainMultiple)
             .defaultSkin = modelResources.defaultSkin;
 
         renderer.setWebGl(webGl);
 
-        renderer.start(bufferFactory).then(() => {
+        renderer.initialize(bufferFactory).then(() => {
             initializeMovementListeners();
-            renderer.addShader("INSTANCE", {vectorSource: vectorInstancing, fragSource: fragmentInstancing});
             // setup matrices, one per instance
-            const numInstances = 50;
+            const numInstances = 5;
             // make a typed array with one view per matrix
             const matrixData = new Float32Array(numInstances * 16);
             const locations: Array<Vector3> = [];
@@ -65,12 +63,15 @@ function main() {
                 gameWindow.width = window.innerWidth
                 gameWindow.height = window.innerHeight
 
-                renderer.setProjectionMatrix(lookAtPerspective(camera, {x: 0, y:0, z: 20}, {x: 0, y:1, z: 0}, getPerspective(webGl)))
+                renderer.setProjectionMatrix(lookAtPerspective(camera, {x: 0, y:0, z: 20}, {x: 0, y:1, z: 0}, getPerspective(webGl)));
                 // for(let i = 0; i < locations.length; i++) {
-                //     renderer.renderMain(locations[i], rotations[i], bufferFactory.modelReferences.get("Cube")!)
+                    renderer.renderMain({x: 0.0, y: -6.0, z: 20.0}, {x:0, y: 0, z: 0}, bufferFactory.modelReferences.get("police")!);
                 // }
             
-                renderer.renderMultiple(locations, rotations, bufferFactory.modelReferences.get("Cube")!)
+                renderer.renderMultiple(locations, rotations, bufferFactory.modelReferences.get("Cube")!);
+
+                // renderer.renderMain({x: 0.0, y: 6, z: 20.0}, {x:0, y: 0, z: 0}, bufferFactory.modelReferences.get("police")!);
+
                 requestAnimationFrame(render);
             }
             requestAnimationFrame(render);

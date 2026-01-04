@@ -2,8 +2,8 @@ import { PoseInfo } from "../model-info";
 
 export enum ShadersType {
     main = "main",
+    mainMultiple = "mainMultiple",
     animated = "animated",
-    terrian = 'terrian'
 }
 
 export interface ModelReference {

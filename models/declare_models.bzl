@@ -12,10 +12,23 @@ def declare_models(name):
         out = "cube.png"
     )
 
+    copy_file(
+        name = "copyPolice",
+        src = "//models:police.ps",
+        out = "police.ps"
+    )
+    copy_file(
+        name = "copyPoliceSkin",
+        src = "//models:police.png",
+        out = "police.png"
+    )
+
     native.filegroup(
         name = name, 
         srcs = [
             ":copyCube",
-            "copyCubeSkin",
+            ":copyCubeSkin",
+            ":copyPolice",
+            ":copyPoliceSkin"
         ]
     )
