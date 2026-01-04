@@ -65,10 +65,10 @@ function main() {
 
                 renderer.setProjectionMatrix(lookAtPerspective(camera, {x: 0, y:0, z: 20}, {x: 0, y:1, z: 0}, getPerspective(webGl)));
                 // for(let i = 0; i < locations.length; i++) {
-                    // renderer.renderMain({x: 0.0, y: -6.0, z: 20.0}, {x:0, y: 0, z: 0}, bufferFactory.modelReferences.get("police")!);
+                    renderer.renderMain({x: 0.0, y: -6.0, z: 20.0}, {x:0, y: 0, z: 0}, bufferFactory.modelReferences.get("police")!);
                 // }
             
-                // renderer.renderMultiple(locations, rotations, bufferFactory.modelReferences.get("Cube")!);
+                renderer.renderMultiple(locations, rotations, bufferFactory.modelReferences.get("Cube")!);
 
                 // renderer.renderMain({x: 0.0, y: 6, z: 20.0}, {x:0, y: 0, z: 0}, bufferFactory.modelReferences.get("police")!);
 

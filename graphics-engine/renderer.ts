@@ -117,9 +117,11 @@ export class Renderer {
   private useShaderProgram(shaderProgram: ShadersType | string): void {
     let programInfo: ShaderInterface = this.shaderPrograms.get(shaderProgram)!;
     if (this.currentRender != shaderProgram) {
-      // let currentShader = this.shaderPrograms.get(shaderProgram)!
-      // currentShader.cleanup();
-      // programInfo.enable();
+      let currentShader = this.shaderPrograms.get(shaderProgram);
+      if (currentShader) {
+        currentShader.disable();
+      }
+      programInfo.enable();
       this.webGl.useProgram(programInfo.program.program);
 
       this.currentRender = shaderProgram;
