@@ -4,7 +4,7 @@ load("@aspect_rules_js//js:defs.bzl", "js_binary")
 load("//models:declare_models.bzl", "declare_models")
 
 js_binary(
-    name = "shader",
+    name = "test",
     entry_point = "server.js",
     data = [
         "//:node_modules/express",

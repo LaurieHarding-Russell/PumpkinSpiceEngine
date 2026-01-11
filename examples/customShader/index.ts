@@ -1,27 +1,22 @@
 import { Renderer } from '@pumkinspicegames/pumpkinSpiceEngine/renderer';
-import { Vector3 } from "@pumkinspicegames/pumpkinSpiceEngine/model/vector";
-import { BufferFactory } from "@pumkinspicegames/pumpkinSpiceEngine/buffer-factory";
+
 import { ModelResources } from './models';
-import { wavyFragmentSource, wavyVectorSource } from './custom-shaders';
+import { lookAtPerspective, getPerspective } from "@pumkinspicegames/pumpkinSpiceEngine/util";
+import { BufferFactory } from '@pumkinspicegames/pumpkinSpiceEngine/shaders/buffer-factory';
+import { initShaderProgram } from '@pumkinspicegames/pumpkinSpiceEngine/shaders/load-shader';
+import { CustomShader } from './custom.shader';
+import { customFragmentSource, customVectorSource } from './custom.hsls';
 
 const maxZoom = -1;
 const minZoom = -20;
 
-var map: Array<string> = ["1"];
-var selectedType = '0';
+var renderer: Renderer = new Renderer();
 
-
-var renderer: Renderer;
-let position:Vector3 = {
-    x: 0,
-    y: 0,
-    z: 0
-}
 let camera = {
     position: {
-        x: 0,
-        y: 0,
-        z: -20
+        x: 10,
+        y: 10,
+        z: 10
     }, 
     rotation: {
         x: 0,
@@ -30,48 +25,63 @@ let camera = {
     }
 }
 
-// FIXME, time hack
-setTimeout(() => {
-
-    initializeMovementListeners();
-
-    const gameWindow: HTMLCanvasElement | null = document.querySelector("#screen")    
-
-    if (gameWindow == null) {
-        throw "couldn't find things and magic and stuff";
-    }
-
-    const webGl: WebGL2RenderingContext | null = gameWindow.getContext("webgl2");
-    if (webGl == null) throw "oh no! uggg";
+function main() {
+    const gameWindow: HTMLCanvasElement = document.querySelector("#screen")!;
+    const stats: HTMLDivElement = document.querySelector("#states")!;
+    const webGl: WebGL2RenderingContext = gameWindow.getContext("webgl2")!;
 
     let modelResources = new ModelResources();
     modelResources.load().then(() => {
-      let bufferFactory = new BufferFactory();
-      bufferFactory
-        .addModel("Cube", modelResources.cube, "Custom")
-        .defaultSkin = modelResources.defaultSkin;
 
-        renderer = new Renderer(webGl);
-        renderer.start(bufferFactory).then(() => {
-            renderer.addShader("Custom", {vectorSource: wavyVectorSource, fragSource: wavyFragmentSource})
-            // FIXME, loading
-            setInterval(() => {
+        let bufferFactory = new BufferFactory();
+        bufferFactory
+            .addModel("Cube", modelResources.cube, "custom")
+            .defaultSkin = modelResources.defaultSkin;
+
+        renderer.setWebGl(webGl);
+
+        renderer.initialize(bufferFactory).then(() => {
+            initializeMovementListeners();
+            initializeCustomShader(webGl, renderer);
+
+            // setup colors, one per instance
+            const colorBuffer = webGl.createBuffer();
+            webGl.bindBuffer(webGl.ARRAY_BUFFER, colorBuffer);
+
+            let render = () => {
                 gameWindow.width = window.innerWidth
                 gameWindow.height = window.innerHeight
 
-                renderer.setProjectionMatrixByCamera(camera);
+                renderer.setProjectionMatrix(lookAtPerspective(camera, {x: 0, y:0, z: 20}, {x: 0, y:1, z: 0}, getPerspective(webGl)));
+            
+                renderer.renderMain({x: 0,y: 0, z: 0}, {x: 0,y: 0,z: 0}, bufferFactory.modelReferences.get("Cube")!);
 
-                renderer.renderMain(position, { x:0,y: 0, z:0 },
-                    bufferFactory.modelReferences.get("Cube")!
-                );
-            }, 33)
+                requestAnimationFrame(render);
+
+                stats.innerHTML = `
+                    camera x: ${camera.position.x}
+                    camera y: ${camera.position.y}
+                    camera z: ${camera.position.z}
+
+                    camera rx: ${camera.rotation.x}
+                    camera ry: ${camera.rotation.y}
+                    camera rz: ${camera.rotation.z}
+                , ` 
+            }
+            requestAnimationFrame(render);
         });
     });
-}, 1000);
+}
+
+function initializeCustomShader(webGl: WebGL2RenderingContext, renderer: Renderer): void {
+    const shaderProgram = initShaderProgram(webGl, customVectorSource, customFragmentSource);
+    let customShader = new CustomShader(webGl);
+    customShader.initMainShaderProgram(shaderProgram, renderer.buffers);
+    renderer.addShader("custom", customShader);
+}
 
 function initializeMovementListeners() {
     document.addEventListener('keydown', (event: KeyboardEvent) => {
-
         if (event.key == '8') {
             camera.rotation.x += 0.1;
         }
@@ -103,6 +113,15 @@ function initializeMovementListeners() {
         if (event.key == 's') {
             camera.position.y += 0.1;
         }
+
+        if (event.key == 'z') {
+            camera.position.z += 0.1;
+        }
+
+        if (event.key == 'x') {
+            camera.position.z -= 0.1;
+        }
+
     }, false);
     
     document.onwheel = (event: WheelEvent) => {
@@ -111,3 +130,8 @@ function initializeMovementListeners() {
         camera.position.z = Math.min(Math.max(minZoom, camera.position.z), 0);
     }
 }
+
+// FIXME, time hack
+setTimeout(() => {
+    main();
+});

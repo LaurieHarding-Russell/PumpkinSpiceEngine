@@ -1,4 +1,4 @@
-export const wavyVectorSource = 
+export const customVectorSource = 
 `#version 300 es
 in vec4 inputPosition;
 in vec3 inputNormal;
@@ -18,12 +18,12 @@ void main() {
     vertPos = vec3(vertPos4) / vertPos4.w;
 
     // Identity matrix * any vector should return itself, eh?
-    normalInterp = vec3(normalMat * vec4(inputNormal, 0.0));
+    normalInterp = inputNormal;
     vTexcoord = inputUV;
 }
 `;
 
-export const wavyFragmentSource = 
+export const customFragmentSource = 
 `#version 300 es
 precision highp float;
 
@@ -60,12 +60,12 @@ void main() {
     specular = pow(specAngle, shininess);
   }
 
-  vec3 colorLinear = texture(uTexture, vTexcoord).xyz * ambientColor * sin(vertPos) +
+  vec3 colorLinear = texture(uTexture, vTexcoord).xyz * ambientColor +
                       diffuseColor * lambertian * lightColor * lightPower / distance +
                       specColor * specular * lightColor * lightPower / distance;
 
   
 
-  fragColor = vec4(colorLinear, 1.0);
+  fragColor = vec4(colorLinear.z/colorLinear.y , colorLinear.y, colorLinear.x, 1.0);
 }
 `;

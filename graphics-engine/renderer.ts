@@ -23,7 +23,7 @@ export class Renderer {
 
   private currentRender: ShadersType | string | undefined = undefined;
 
-  private buffers!: Buffers;
+  public buffers!: Buffers;
     
   public constructor(webGl?: WebGL2RenderingContext) {
     this.webGl = webGl as WebGL2RenderingContext; // HACK: think about this
