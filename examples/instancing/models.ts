@@ -3,9 +3,7 @@ import { loadPSObject } from "@pumkinspicegames/pumpkinSpiceEngine/model-loaders
 
 export class ModelResources {
     
-
     cube!: ModelInfo;
-    defaultSkin!: TexImageSource
     
     constructor() {
     }
@@ -30,7 +28,6 @@ export class ModelResources {
     private async loadCube() {
         const resultSkin = await this.loadSkin("cube.png");
         this.cube = await this.loadModel("cube.ps", resultSkin);
-        this.defaultSkin = await this.loadSkin("cube.png");
     }
 
     private makeRequest(method: string, url: string): Promise<string> {

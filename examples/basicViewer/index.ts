@@ -13,20 +13,20 @@ var renderer: Renderer = new Renderer();
 
 let camera = {
     position: {
-        x: 10,
-        y: 10,
-        z: 10
+        x: 10.0,
+        y: 10.0,
+        z: 0.0
     }, 
     rotation: {
-        x: 0,
-        y: 0,
-        z: 0
+        x: 0.5,
+        y: 0.5,
+        z: 0.5,
     }
 }
 
 function main() {
     const gameWindow: HTMLCanvasElement = document.querySelector("#screen")!;
-    const stats: HTMLDivElement = document.querySelector("#states")!;
+    const stats: HTMLDivElement = document.querySelector("#stats")!;
     const webGl: WebGL2RenderingContext = gameWindow.getContext("webgl2")!;
 
     let modelResources = new ModelResources();
@@ -35,7 +35,6 @@ function main() {
         let bufferFactory = new BufferFactory();
         bufferFactory
             .addModel("Cube", modelResources.cube, ShadersType.main)
-            .defaultSkin = modelResources.defaultSkin;
 
         renderer.setWebGl(webGl);
 
@@ -46,13 +45,13 @@ function main() {
             const colorBuffer = webGl.createBuffer();
             webGl.bindBuffer(webGl.ARRAY_BUFFER, colorBuffer);
 
-            renderer.getShader(ShadersType.main).setTexture(bufferFactory.modelReferences.get("Cube")!);
+            renderer.getShader(ShadersType.main).setTexture(bufferFactory.modelReferences.get("Cube")!.texture);
 
             let render = () => {
                 gameWindow.width = window.innerWidth
                 gameWindow.height = window.innerHeight
 
-                renderer.setProjectionMatrix(lookAtPerspective(camera, {x: 0, y:0, z: 20}, {x: 0, y:1, z: 0}, getPerspective(webGl)));
+                renderer.setProjectionMatrix(lookAtPerspective(camera, {x: 0,y: 0, z: 0}, {x: 0, y:1, z: 0}, getPerspective(webGl)));
             
                 renderer.renderMain({x: 0,y: 0, z: 0}, {x: 0,y: 0,z: 0}, bufferFactory.modelReferences.get("Cube")!);
 

@@ -36,7 +36,6 @@ function main() {
         let bufferFactory = new BufferFactory();
         bufferFactory
             .addModel("Cube", modelResources.cube, "custom")
-            .defaultSkin = modelResources.defaultSkin;
 
         renderer.setWebGl(webGl);
 
@@ -48,7 +47,7 @@ function main() {
             const colorBuffer = webGl.createBuffer();
             webGl.bindBuffer(webGl.ARRAY_BUFFER, colorBuffer);
 
-            renderer.getShader("custom").setTexture(bufferFactory.modelReferences.get("Cube")!);
+            renderer.getShader("custom").setTexture(bufferFactory.modelReferences.get("Cube")!.texture);
             let render = () => {
                 gameWindow.width = window.innerWidth
                 gameWindow.height = window.innerHeight

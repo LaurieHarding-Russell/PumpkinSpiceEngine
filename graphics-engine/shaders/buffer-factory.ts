@@ -22,7 +22,6 @@ export class BufferFactory implements BufferFactoryInterface {
     private models: Array<ModelInfo> = [];
     private currentPositioin: number = 0;
 
-    public defaultSkin!: TexImageSource;
     public modelReferences = new Map<string, ModelReference> ();
 
     constructor() {

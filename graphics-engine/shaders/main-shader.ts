@@ -81,14 +81,15 @@ export class MainShader implements ShaderInterface {
         this.webGl.bindVertexArray(null);
     }
 
-    setTexture(modelReference: ModelReference): void {
-        if (modelReference.texture != null) {
+    setTexture(texture: TexImageSource | null): void {
+        if (texture != null) {
             this.webGl.bindTexture(this.webGl.TEXTURE_2D, this.program.uniformLocations.texture);
-            this.webGl.texImage2D(this.webGl.TEXTURE_2D, 0, this.webGl.RGBA, this.webGl.RGBA, this.webGl.UNSIGNED_BYTE,
-            modelReference.texture);
+            this.webGl.texImage2D(this.webGl.TEXTURE_2D, 0, this.webGl.RGBA, this.webGl.RGBA, this.webGl.UNSIGNED_BYTE, texture);
             this.webGl.texParameteri(this.webGl.TEXTURE_2D, this.webGl.TEXTURE_WRAP_S, this.webGl.REPEAT);
             this.webGl.texParameteri(this.webGl.TEXTURE_2D, this.webGl.TEXTURE_WRAP_T, this.webGl.REPEAT);
             this.webGl.generateMipmap(this.webGl.TEXTURE_2D);
+            this.webGl.texParameteri(this.webGl.TEXTURE_2D, this.webGl.TEXTURE_MIN_FILTER, this.webGl.NEAREST_MIPMAP_LINEAR);
+            this.webGl.texParameteri(this.webGl.TEXTURE_2D, this.webGl.TEXTURE_MAG_FILTER, this.webGl.NEAREST_MIPMAP_LINEAR);
         } else {
             throw new Error("No texture present");
         }

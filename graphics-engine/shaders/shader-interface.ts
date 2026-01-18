@@ -6,7 +6,7 @@ import { ShaderProgramInfo } from "./load-shader";
 export interface ShaderInterface {
     program: ShaderProgramInfo; 
     initMainShaderProgram(shaderProgram: WebGLProgram, buffers: Buffers): ShaderProgramInfo;
-    setTexture(modelReference: ModelReference): void;
+    setTexture(texture: TexImageSource | null): void;
     setProjection(projectionMatrix: mat4): void;
     setModelView: (...something: any) => void; // hacky hack.
 
