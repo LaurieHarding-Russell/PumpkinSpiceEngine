@@ -58,6 +58,8 @@ function main() {
             const colorBuffer = webGl.createBuffer();
             webGl.bindBuffer(webGl.ARRAY_BUFFER, colorBuffer);
 
+            renderer.getShader(ShadersType.mainMultiple).setTexture(bufferFactory.modelReferences.get("Cube")!);
+
             let render = () => {
                 gameWindow.width = window.innerWidth
                 gameWindow.height = window.innerHeight

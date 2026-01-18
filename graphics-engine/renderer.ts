@@ -56,6 +56,10 @@ export class Renderer {
     this.shaderPrograms.set(shaderName, shader);
   }
 
+  public getShader(shaderName: string): ShaderInterface {
+    return this.shaderPrograms.get(shaderName)!;
+  }
+
   public getProjectionMatrix(): mat4 {
     return mat4.clone(this.projectionMatrix);
   }
@@ -74,7 +78,6 @@ export class Renderer {
 
     shader.setProjection(this.projectionMatrix)
     shader.setModelView(location, rotation);
-    shader.setTexture(modelReference);
 
     this.webGl.drawArrays(this.webGl.TRIANGLES, modelReference.offset, modelReference.numberOfVerts);
   }
@@ -87,7 +90,6 @@ export class Renderer {
 
     let modelViews: Array<mat4> = this.toModelViews(locations, rotations);
     shader.setModelView(modelViews);
-    shader.setTexture(modelReference);
 
     let numInstances = modelViews.length;
 
