@@ -53,7 +53,7 @@ export function loadPSObject(psFile: string, texture: TexImageSource | null): Mo
         let textureInfo: TextureInfo = {
             faceId: line[0],
             vertexId: line[1],
-            textureLocation: [line[2], 1- line[3]]
+            textureLocation: [line[2], line[3]]
         }
         if (model.textureCoordinates.has(textureInfo.faceId)) {
             model.textureCoordinates.get(textureInfo.faceId)?.push(textureInfo);
