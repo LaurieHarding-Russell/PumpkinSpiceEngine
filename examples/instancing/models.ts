@@ -5,7 +5,6 @@ export class ModelResources {
     
 
     cube!: ModelInfo;
-    police!: ModelInfo;
     defaultSkin!: TexImageSource
     
     constructor() {
@@ -13,7 +12,6 @@ export class ModelResources {
 
     public async load() {
         await this.loadCube();
-        await this.loadPolice();
     }
 
     public async loadModel(name: string, skin: TexImageSource): Promise<ModelInfo> {
@@ -33,11 +31,6 @@ export class ModelResources {
         const resultSkin = await this.loadSkin("cube.png");
         this.cube = await this.loadModel("cube.ps", resultSkin);
         this.defaultSkin = await this.loadSkin("cube.png");
-    }
-
-    private async loadPolice() {
-        const resultSkin = await this.loadSkin("police.png");
-        this.police = await this.loadModel("police.ps", resultSkin);
     }
 
     private makeRequest(method: string, url: string): Promise<string> {
