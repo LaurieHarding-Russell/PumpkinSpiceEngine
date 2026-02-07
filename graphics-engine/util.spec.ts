@@ -1,6 +1,8 @@
-import { mat4 } from 'gl-matrix';
-import { Triangle, intersects, unproject } from './util';
-import { Vector2, Vector3 } from './model/vector';
+import { mat4, vec3 } from 'gl-matrix';
+import { Triangle, getPerspective, intersects, intersectsDoubleSided, matrixFromLocationRotation, unproject } from './util';
+import { times, toVec3, Vector2, Vector3 } from './model/vector';
+import { Renderer } from './renderer'
+import { BufferFactory } from './shaders/buffer-factory';
 
 describe("intersects function", () => {
   it("Should find correct intersecting point when pointed down.", () => {
@@ -109,4 +111,126 @@ describe("unproject function", () => {
     expect(output?.vector.z).not.toEqual(0);
   })
 
+
+  it("Integration test", async() => {
+    let camera = {
+      position: {
+          x: 0,
+          y: 0,
+          z: 25
+      }, 
+      rotation: {
+          x: -0.0,
+          y: 0.0,
+          z: 0.0,
+      }
+    }
+
+    let vector: Vector2 = {x: 0, y: 0};
+    let renderer = new Renderer()
+   
+    const webGl = {
+      canvas: {
+        width: 1000,
+        height: 1000
+      }
+    } as WebGL2RenderingContext;
+
+    renderer.setWebGl(webGl);
+    renderer.setProjectionMatrix(simpleCamera(camera.position, camera.rotation, getPerspective(webGl)));
+    let output = unproject(renderer.getProjectionMatrix(), vector);
+
+    expect(output?.vector.x).toEqual(-0);
+    expect(output?.vector.y).toEqual(-0);
+    expect(output?.vector.z).not.toEqual(0);
+  })
+
+  xit("Integration test2", async() => {
+    let camera = {
+      position: {
+          x: -2,
+          y: 2,
+          z: 25
+      }, 
+      rotation: {
+          x: 0.0,
+          y: 0.0,
+          z: 0.0,
+      }
+    }
+
+    const centeredTriangle: Triangle = {
+      point1: {x:0, y:-20, z:0},
+      point2: {x:-20, y:20, z:0},
+      point3: {x:20, y:20, z:0}
+    };
+
+    let renderer = new Renderer()
+   
+    const webGl = {
+      canvas: {
+        width: 1000,
+        height: 1000
+      }
+    } as WebGL2RenderingContext;
+
+    let projectionMatrix: mat4 = simpleCamera(camera.position, camera.rotation, getPerspective(webGl))
+
+    const startingPoint = ({x: 0, y: 0, z: 0});
+    const modelViewMatrix: mat4 = matrixFromLocationRotation({x: 0, y: 0, z: 20}, {x: 0, y: 0, z: 0});
+    // projection * modelview * inputPosition;
+    const combinedMatrix = mat4.create(); 
+    mat4.multiply(combinedMatrix, projectionMatrix, modelViewMatrix);
+
+    const endPoint = vec3.create();
+
+    vec3.transformMat4(endPoint, toVec3(startingPoint), combinedMatrix);
+
+    renderer.setWebGl(webGl);
+    renderer.setProjectionMatrix(projectionMatrix);
+
+    renderer.renderMain
+    let output = unproject(renderer.getProjectionMatrix(), {x: endPoint[0], y: endPoint[1]});
+
+    console.log("output", output);
+
+    let intersectingPoint = intersectsDoubleSided(output, centeredTriangle);
+
+    console.log("intersectingPoint", intersectingPoint);
+
+    expect(intersectingPoint?.x).toBeCloseTo(startingPoint.x, 5);
+    expect(intersectingPoint?.y).toBeCloseTo(startingPoint.y, 5);
+    expect(intersectingPoint?.z).toBeCloseTo(startingPoint.z, 5);
+  })
+
 })
+
+
+export function simpleCamera(position: Vector3, rotation: Vector3, projectionMatrix: mat4): mat4 {
+  const newProjectionMatrix = mat4.clone(projectionMatrix);
+
+  mat4.rotateX(
+    newProjectionMatrix,
+    newProjectionMatrix,
+    rotation.x
+  );
+
+  mat4.rotateY(
+    newProjectionMatrix,
+    newProjectionMatrix,
+    rotation.y
+  );
+
+  mat4.rotateZ(
+    newProjectionMatrix,
+    newProjectionMatrix,
+    rotation.z
+  );
+
+  mat4.translate(
+    newProjectionMatrix,
+    newProjectionMatrix,
+    [position.x, position.y, position.z]);
+
+  return newProjectionMatrix;
+}

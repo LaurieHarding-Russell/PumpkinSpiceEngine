@@ -52,6 +52,7 @@ ts_project(
     deps = [
         ":graphics-engine",
         "//:node_modules/@types/jest",
+        "//:node_modules/@babel/preset-env",
         "//:node_modules/jest-environment-jsdom",
         "//:node_modules/ts-jest"
     ],

@@ -3,10 +3,10 @@ import { Vector2, Vector3, crossProduct, dotProduct, fromVec3, minus, normalize,
 import { Camera } from "./model/camera";
 
 
-export const zNear = 0.1;
+export const zNear = 0.01;
 export const zFar = 100.0;
 // FIXME centralize
-const EPSILON = 0.0000001;
+const EPSILON = 0.00000000001;
 const inverseEpsilon = 1/EPSILON;
 
 export interface Triangle {
@@ -90,15 +90,22 @@ export function project(out: vec3, vector: vec3, projection: mat4): vec3 {
     )
     return out
 }
-  
+
+export function intersectsDoubleSided(ray: Ray, triangle: Triangle): Vector3 | null {
+    let intersectingPoint = intersects(ray.origin, ray.vector, triangle);
+    if (intersectingPoint != null) {
+        return intersectingPoint;
+    }
+    intersectingPoint = intersects(ray.origin, times(ray.vector, -1), triangle);
+    return intersectingPoint;
+}
+
 // Möller–Trumbore intersection algorithm
-export function intersects(origin: Vector3, rayVector: Vector3, triangle: Triangle): Vector3 | null{
+export function intersects(origin: Vector3, rayVector: Vector3, triangle: Triangle): Vector3 | null {
     
     let vertex0 = triangle.point1;
     let vertex1 = triangle.point2;  
     let vertex2 = triangle.point3;
-
-    let distanceBetweenOriginAndEdgesOrigin, originEdgeOriginNormal;
 
     let edge1 = minus(vertex1, vertex0);
     let edge2 = minus(vertex2, vertex0);
@@ -111,14 +118,14 @@ export function intersects(origin: Vector3, rayVector: Vector3, triangle: Triang
     }
 
     let inverseOfDeterminantOfMatrix = 1.0 / determinantOfTheMatrix;
-    distanceBetweenOriginAndEdgesOrigin = minus(origin, vertex0);
+    let distanceBetweenOriginAndEdgesOrigin = minus(origin, vertex0);
 
     let barycentricU = dotProduct(distanceBetweenOriginAndEdgesOrigin, rayVectorEdgeNormal) * inverseOfDeterminantOfMatrix; 
     if (barycentricU < 0.0 || barycentricU > 1.0) {
         return null; //Not in triangle
     }
 
-    originEdgeOriginNormal = crossProduct(distanceBetweenOriginAndEdgesOrigin, edge1);
+    let originEdgeOriginNormal = crossProduct(distanceBetweenOriginAndEdgesOrigin, edge1);
 
     let barycentricV = inverseOfDeterminantOfMatrix * dotProduct(rayVector,originEdgeOriginNormal);
     if (barycentricV < 0.0 || barycentricU + barycentricV > 1.0) {
@@ -229,7 +236,7 @@ export function matrixFromLocationRotation(location: Vector3, rotation: Vector3)
   }
 
 
-export function cameraBasedProjection(camera: Camera, webGl: WebGL2RenderingContext) {
+export function cameraBasedProjection(camera: Camera, webGl: WebGL2RenderingContext): mat4 {
 
     let projectionMatrix = mat4.create();
 

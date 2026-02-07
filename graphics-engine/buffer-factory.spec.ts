@@ -1,6 +1,6 @@
-import { BufferFactory, bufferStride } from "./buffer-factory";
 import { ModelInfo, TextureInfo } from "./model-info";
 import { ShadersType } from "./model/model-reference";
+import { BufferFactory } from './shaders/buffer-factory';
 
 describe("buffer factory", () => {
 
@@ -50,17 +50,4 @@ describe("buffer factory", () => {
 
 
     })
-
-    xit("should have a reference with a the correct offset", () => {
-
-        const bufferFactory = new BufferFactory();
-        bufferFactory.addModel("test", model, ShadersType.main)
-                    .addModel("test2", model, ShadersType.main)
-
-        let array = (bufferFactory as any).createInterleavingArray();
-
-        expect(array.slice(0, bufferFactory.modelReferences.get("test2")!.numberOfVerts * bufferStride))
-            .toEqual(array.slice(bufferFactory.modelReferences.get("test2")!.numberOfVerts * bufferStride))
-
-    }) 
 });
