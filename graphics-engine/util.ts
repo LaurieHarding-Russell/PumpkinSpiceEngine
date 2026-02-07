@@ -1,5 +1,5 @@
 import { mat4, vec3 } from "gl-matrix";
-import { Vector2, Vector3, crossProduct, dotProduct, fromVec3, minus, normalize, plus, roundToEPSILON, times } from "./model/vector";
+import { Vector2, Vector3, crossProduct, dotProduct, fromVec3, minus, normalize, plus, roundToEPSILON, times, toVec3 } from "./model/vector";
 import { Camera } from "./model/camera";
 
 
@@ -32,16 +32,39 @@ export interface Line {
     endPoint: Vector3;
 }
 
-export function unproject(projection: mat4, vector: Vector2): Ray {
+export interface Viewport {
+    x: number;
+    y: number;
+    width: number;
+    height: number
+}
+
+export function unproject(projection: mat4, vector: Vector2, viewport: Viewport): Ray {
+
     const inverseMatrix = mat4.create();
     mat4.invert(inverseMatrix, projection);
 
+    let x = vector.x - viewport.x;
+    let y = viewport.height - vector.y;
+    y = y - viewport.y;
+
+
+    const toProjectNear: Vector3 = {
+        x: (2 * x) / viewport.width - 1,
+        y: (2 * y) / viewport.height - 1,
+        z: zNear
+    };
+
+    const toProjectFar: Vector3 = {
+        x: (2 * x) / viewport.width - 1,
+        y: (2 * y) / viewport.height - 1,
+        z: zFar
+    };
+
     let near = vec3.create();
     let far = vec3.create();
-    let ray = vec3.create();
-
-    project(near, [vector.x, vector.y, zNear], inverseMatrix);
-    project(far, [vector.x, vector.y, zFar], inverseMatrix);
+    project(near, toVec3(toProjectNear), inverseMatrix);
+    project(far, toVec3(toProjectFar), inverseMatrix);
 
     return {
         origin: {
@@ -51,6 +74,7 @@ export function unproject(projection: mat4, vector: Vector2): Ray {
         },
         vector: minus(fromVec3(far), fromVec3(near))
     }
+
 }
 
 // https://github.com/toji/gl-matrix/issues/101 :(
@@ -145,8 +169,6 @@ export function intersects(origin: Vector3, rayVector: Vector3, triangle: Triang
 export function getPerspective(webGl: WebGL2RenderingContext): mat4 {
     const fieldOfView = 45 * Math.PI / 180;   // in radians
     const aspect = webGl.canvas.width / webGl.canvas.height
-    const zNear = 0.1;
-    const zFar = 100.0;
 
     const projectionMatrix = mat4.create();
     mat4.perspective(projectionMatrix,
@@ -242,8 +264,6 @@ export function cameraBasedProjection(camera: Camera, webGl: WebGL2RenderingCont
 
     const fieldOfView = 45 * Math.PI / 180;   // in radians
     const aspect = webGl.canvas.width / webGl.canvas.height
-    const zNear = 0.1;
-    const zFar = 100.0;
 
     mat4.perspective(projectionMatrix,
         fieldOfView,

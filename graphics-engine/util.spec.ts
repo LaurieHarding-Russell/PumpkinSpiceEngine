@@ -1,8 +1,15 @@
 import { mat4, vec3 } from 'gl-matrix';
-import { Triangle, getPerspective, intersects, intersectsDoubleSided, matrixFromLocationRotation, unproject } from './util';
-import { times, toVec3, Vector2, Vector3 } from './model/vector';
+import { Triangle, getPerspective, intersects, intersectsDoubleSided, matrixFromLocationRotation, project, unproject, zFar, zNear } from './util';
+import { fromVec3, minus, times, toVec3, Vector2, Vector3 } from './model/vector';
 import { Renderer } from './renderer'
-import { BufferFactory } from './shaders/buffer-factory';
+import { ZERO_VECTOR } from './constants'
+
+const mockWebGl = {
+  canvas: {
+    width: 1000,
+    height: 1000
+  }
+} as WebGL2RenderingContext;
 
 describe("intersects function", () => {
   it("Should find correct intersecting point when pointed down.", () => {
@@ -68,141 +75,53 @@ describe("intersects function", () => {
 })
 
 describe("unproject function", () => {
-  it("should take take a pixel in the middle of the screen with a camera pointing down and return a ray pointing down", () => {
-    let projection = mat4.create();
-    const fieldOfView = 45 * Math.PI / 180;   // in radians
-    const aspect = 100 / 100
-    const zNear = 0.1;
-    const zFar = 100.0;
-      
-    mat4.perspective(projection,
-        fieldOfView,
-        aspect,
-        zNear,
-        zFar);
 
-    let vector: Vector2 = {x: 0, y: 0};
-
-    let output = unproject(projection, vector)
-    expect(output?.vector.x).toEqual(-0);
-    expect(output?.vector.y).toEqual(-0);
-    expect(output?.vector.z).not.toEqual(0);
-  })
-
-  it("bottom middle should have 0 x", () => {
-    let projection = mat4.create();
-    const fieldOfView = 45 * Math.PI / 180;   // in radians
-    const aspect = 100 / 100
-    const zNear = 0.1;
-    const zFar = 100.0;
-      
-    mat4.perspective(projection,
-        fieldOfView,
-        aspect,
-        zNear,
-        zFar);
-
-    let vector: Vector2 = {x: 0, y: 50};
-
-    let output = unproject(projection, vector)
-
-    expect(output?.vector.x).toEqual(-0);
-    expect(output?.vector.y).not.toEqual(0);
-    expect(output?.vector.z).not.toEqual(0);
-  })
-
-
-  it("Integration test", async() => {
+  fit("Integration test", async() => {
     let camera = {
       position: {
-          x: 0,
+          x: 5,
           y: 0,
           z: 25
       }, 
       rotation: {
-          x: -0.0,
-          y: 0.0,
-          z: 0.0,
+          x: 0.5,
+          y: 0.1,
+          z: 0
       }
     }
 
-    let vector: Vector2 = {x: 0, y: 0};
+    let input: Vector2 = {x: 0, y: 0};
     let renderer = new Renderer()
-   
-    const webGl = {
-      canvas: {
-        width: 1000,
-        height: 1000
-      }
-    } as WebGL2RenderingContext;
 
-    renderer.setWebGl(webGl);
-    renderer.setProjectionMatrix(simpleCamera(camera.position, camera.rotation, getPerspective(webGl)));
-    let output = unproject(renderer.getProjectionMatrix(), vector);
+    renderer.setWebGl(mockWebGl);
+    renderer.setProjectionMatrix(simpleCamera(camera.position, camera.rotation, getPerspective(mockWebGl)));
+    let projectedInput = vec3.create();
+    project(projectedInput, [input.x, input.y, zNear], renderer.getProjectionMatrix());
+    // FIXME to clip space and then window coordinates. 
 
-    expect(output?.vector.x).toEqual(-0);
-    expect(output?.vector.y).toEqual(-0);
-    expect(output?.vector.z).not.toEqual(0);
-  })
+    // pos.X = screenWidth*(pos.X + 1.0)/2.0;
+    // pos.Y = screenHeight * (1.0 - ((pos.Y + 1.0) / 2.0));
 
-  xit("Integration test2", async() => {
-    let camera = {
-      position: {
-          x: -2,
-          y: 2,
-          z: 25
-      }, 
-      rotation: {
-          x: 0.0,
-          y: 0.0,
-          z: 0.0,
-      }
+    let coordinateWindowLocation: Vector2 = {
+      x: mockWebGl.canvas.width * (projectedInput[0] + 1.0)/ 2.0,
+      y: mockWebGl.canvas.height * (1.0 - ((projectedInput[1] + 1.0) / 2.0))
     }
 
-    const centeredTriangle: Triangle = {
-      point1: {x:0, y:-20, z:0},
-      point2: {x:-20, y:20, z:0},
-      point3: {x:20, y:20, z:0}
-    };
+    let output = unproject(renderer.getProjectionMatrix(), 
+                            coordinateWindowLocation, 
+                            {x: 0, y: 0 - input.y, width: mockWebGl.canvas.width, height: mockWebGl.canvas.height }
+                          );
 
-    let renderer = new Renderer()
-   
-    const webGl = {
-      canvas: {
-        width: 1000,
-        height: 1000
-      }
-    } as WebGL2RenderingContext;
+    let multiplier = 1;
+    if (output.origin.x != input.x) {
+      multiplier = (input.x - output.origin.x)/output.vector.x;
+    }
+    console.log("inputProject", projectedInput[0], projectedInput[1], projectedInput[2])
+    console.log("outProject", output.origin.x + output?.vector.x * multiplier, output.origin.y + output?.vector.y * multiplier);
 
-    let projectionMatrix: mat4 = simpleCamera(camera.position, camera.rotation, getPerspective(webGl))
-
-    const startingPoint = ({x: 0, y: 0, z: 0});
-    const modelViewMatrix: mat4 = matrixFromLocationRotation({x: 0, y: 0, z: 20}, {x: 0, y: 0, z: 0});
-    // projection * modelview * inputPosition;
-    const combinedMatrix = mat4.create(); 
-    mat4.multiply(combinedMatrix, projectionMatrix, modelViewMatrix);
-
-    const endPoint = vec3.create();
-
-    vec3.transformMat4(endPoint, toVec3(startingPoint), combinedMatrix);
-
-    renderer.setWebGl(webGl);
-    renderer.setProjectionMatrix(projectionMatrix);
-
-    renderer.renderMain
-    let output = unproject(renderer.getProjectionMatrix(), {x: endPoint[0], y: endPoint[1]});
-
-    console.log("output", output);
-
-    let intersectingPoint = intersectsDoubleSided(output, centeredTriangle);
-
-    console.log("intersectingPoint", intersectingPoint);
-
-    expect(intersectingPoint?.x).toBeCloseTo(startingPoint.x, 5);
-    expect(intersectingPoint?.y).toBeCloseTo(startingPoint.y, 5);
-    expect(intersectingPoint?.z).toBeCloseTo(startingPoint.z, 5);
+    expect(output.origin.x + output?.vector.x * multiplier).toBeCloseTo(input.x, 5);
+    expect(output.origin.y + output?.vector.y * multiplier).toBeCloseTo(input.y, 5);
   })
-
 })
 
 
@@ -234,3 +153,5 @@ export function simpleCamera(position: Vector3, rotation: Vector3, projectionMat
 
   return newProjectionMatrix;
 }
+
+
