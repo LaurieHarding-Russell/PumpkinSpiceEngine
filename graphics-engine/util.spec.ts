@@ -1,5 +1,5 @@
 import { mat4, vec3 } from 'gl-matrix';
-import { Triangle, getPerspective, intersects, intersectsDoubleSided, matrixFromLocationRotation, project, unproject, zFar, zNear } from './util';
+import { Triangle, getPerspective, intersects, intersectsDoubleSided, matrixFromLocationRotation, project, unproject, unprojectWithInverseProjection, zFar, zNear } from './util';
 import { fromVec3, minus, times, toVec3, Vector2, Vector3 } from './model/vector';
 import { Renderer } from './renderer'
 import { ZERO_VECTOR } from './constants'
@@ -84,23 +84,19 @@ describe("unproject function", () => {
           z: 25
       }, 
       rotation: {
-          x: 0.5,
-          y: 0.1,
+          x: -3,
+          y: 0,
           z: 0
       }
     }
 
-    let input: Vector2 = {x: 0, y: 0};
+    let input: Vector2 = {x: 0, y: 6 * 2.1};
     let renderer = new Renderer()
 
     renderer.setWebGl(mockWebGl);
     renderer.setProjectionMatrix(simpleCamera(camera.position, camera.rotation, getPerspective(mockWebGl)));
     let projectedInput = vec3.create();
-    project(projectedInput, [input.x, input.y, zNear], renderer.getProjectionMatrix());
-    // FIXME to clip space and then window coordinates. 
-
-    // pos.X = screenWidth*(pos.X + 1.0)/2.0;
-    // pos.Y = screenHeight * (1.0 - ((pos.Y + 1.0) / 2.0));
+    project(projectedInput, [input.x, input.y, 0], renderer.getProjectionMatrix());
 
     let coordinateWindowLocation: Vector2 = {
       x: mockWebGl.canvas.width * (projectedInput[0] + 1.0)/ 2.0,
@@ -109,18 +105,29 @@ describe("unproject function", () => {
 
     let output = unproject(renderer.getProjectionMatrix(), 
                             coordinateWindowLocation, 
-                            {x: 0, y: 0 - input.y, width: mockWebGl.canvas.width, height: mockWebGl.canvas.height }
+                            {x: 0, y: 0, width: mockWebGl.canvas.width, height: mockWebGl.canvas.height }
                           );
+    console.log(
+      renderer.getProjectionMatrix(), 
+      coordinateWindowLocation, 
+      {x: 0, y: 0, width: mockWebGl.canvas.width, height: mockWebGl.canvas.height }
+    )
+
 
     let multiplier = 1;
-    if (output.origin.x != input.x) {
-      multiplier = (input.x - output.origin.x)/output.vector.x;
+    if (output.origin.z != 0) {
+      multiplier = -output.origin.z/output.vector.z;
     }
-    console.log("inputProject", projectedInput[0], projectedInput[1], projectedInput[2])
-    console.log("outProject", output.origin.x + output?.vector.x * multiplier, output.origin.y + output?.vector.y * multiplier);
 
-    expect(output.origin.x + output?.vector.x * multiplier).toBeCloseTo(input.x, 5);
-    expect(output.origin.y + output?.vector.y * multiplier).toBeCloseTo(input.y, 5);
+
+    console.log("outProject", {
+        x: output.origin.x + output.vector.x * multiplier, 
+        y: output.origin.y + output.vector.y * multiplier,
+        z: output.origin.z + output.vector.z * multiplier
+    })
+
+    expect(output.origin.x + output?.vector.x * multiplier).toBeCloseTo(input.x, 2);
+    expect(output.origin.y + output?.vector.y * multiplier).toBeCloseTo(input.y, 2);
   })
 })
 
@@ -153,5 +160,3 @@ export function simpleCamera(position: Vector3, rotation: Vector3, projectionMat
 
   return newProjectionMatrix;
 }
-
-

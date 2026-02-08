@@ -3,7 +3,7 @@ import { Vector2, Vector3, crossProduct, dotProduct, fromVec3, minus, normalize,
 import { Camera } from "./model/camera";
 
 
-export const zNear = 0.01;
+export const zNear = -100;
 export const zFar = 100.0;
 // FIXME centralize
 const EPSILON = 0.00000000001;
@@ -39,25 +39,15 @@ export interface Viewport {
     height: number
 }
 
-export function unproject(projection: mat4, vector: Vector2, viewport: Viewport): Ray {
-
-    const inverseMatrix = mat4.create();
-    mat4.invert(inverseMatrix, projection);
-
-    let x = vector.x - viewport.x;
-    let y = viewport.height - vector.y;
-    y = y - viewport.y;
-
-
+export function unprojectWithInverseProjection(inverseMatrix: mat4, vector: Vector2, viewport: Viewport): Ray {
     const toProjectNear: Vector3 = {
-        x: (2 * x) / viewport.width - 1,
-        y: (2 * y) / viewport.height - 1,
+        x: vector.x / viewport.width * 2 - 1,
+        y: vector.y / viewport.height * -2 + 1,
         z: zNear
     };
 
     const toProjectFar: Vector3 = {
-        x: (2 * x) / viewport.width - 1,
-        y: (2 * y) / viewport.height - 1,
+        ...toProjectNear,
         z: zFar
     };
 
@@ -74,7 +64,13 @@ export function unproject(projection: mat4, vector: Vector2, viewport: Viewport)
         },
         vector: minus(fromVec3(far), fromVec3(near))
     }
+}
 
+export function unproject(projection: mat4, vector: Vector2, viewport: Viewport): Ray {
+    const inverseMatrix = mat4.create();
+    mat4.invert(inverseMatrix, projection);
+
+    return unprojectWithInverseProjection(inverseMatrix, vector, viewport);
 }
 
 // https://github.com/toji/gl-matrix/issues/101 :(
