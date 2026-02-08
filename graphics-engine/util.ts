@@ -3,7 +3,7 @@ import { Vector2, Vector3, crossProduct, dotProduct, fromVec3, minus, normalize,
 import { Camera } from "./model/camera";
 
 
-export const zNear = -100;
+export const zNear = 0.01;
 export const zFar = 100.0;
 // FIXME centralize
 const EPSILON = 0.00000000001;
