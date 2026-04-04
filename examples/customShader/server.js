@@ -6,9 +6,9 @@ const express = require('express')
 const app = express()
 
 app.get('/', function(req, res) {
-  // console.log(req);
-  res.sendFile(`${__dirname}/index.html`);
+  res.redirect(`index.html`);
 });
+
 
 app.use(express.static(`${__dirname}`))
 
