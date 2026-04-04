@@ -27,8 +27,6 @@
     },
     "pnpm": {
         "onlyBuiltDependencies": [
-        "@your-org/package-name",
-        "some-other-dependency"
         ]
     }
 }
