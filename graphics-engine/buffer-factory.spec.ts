@@ -1,3 +1,4 @@
+/// <reference types="jest" />
 import { ModelInfo, TextureInfo } from "./model-info";
 import { ShadersType } from "./model/model-reference";
 import { BufferFactory } from './shaders/buffer-factory';
