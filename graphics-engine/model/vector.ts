@@ -23,6 +23,13 @@ export interface Vector3 {
     z: number;
 }
 
+export interface Vector4 {
+    x: number;
+    y: number;
+    z: number;
+    w: number;
+}
+
 export function plus(v1: Vector3, v2: Vector3): Vector3 {
     return {
         x: v1.x + v2.x,

@@ -1,15 +1,11 @@
 {
     "private": true,
     "devDependencies": {
-        "@babel/core": "7.29.0",
-        "@babel/preset-env": "7.29.2",
-        "@babel/preset-react": "7.28.5",
         "@jest/test-sequencer": "30.3.0",
         "@rollup/plugin-node-resolve": "^16.0.3",
         "@types/jest": "30.0.0",
         "@types/node": "25.5.2",
         "@types/webgl2": "^0.0.12",
-        "babel-jest": "30.3.0",
         "express": "5.2.1",
         "express-http-proxy": "2.1.2",
         "jest-cli": "30.3.0",

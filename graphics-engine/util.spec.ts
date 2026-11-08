@@ -1,6 +1,6 @@
 import { mat4, vec3 } from 'gl-matrix';
-import { Triangle, getPerspective, intersects, intersectsDoubleSided, matrixFromLocationRotation, project, unproject, unprojectWithInverseProjection, zFar, zNear } from './util';
-import { fromVec3, minus, times, toVec3, Vector2, Vector3 } from './model/vector';
+import { getPerspective, intersects, project, unproject } from './util';
+import { Vector2, Vector3 } from './model/vector';
 import { Renderer } from './renderer'
 import { ZERO_VECTOR } from './constants'
 
@@ -105,7 +105,7 @@ describe("unproject function", () => {
 
     let output = unproject(renderer.getProjectionMatrix(), 
                             coordinateWindowLocation, 
-                            {x: 0, y: 0, width: mockWebGl.canvas.width, height: mockWebGl.canvas.height }
+                            {x: 0, y: 0, width: mockWebGl.canvas.width, height: mockWebGl.canvas.height, near: 0.01, far: 100 }
                           );
     console.log(
       renderer.getProjectionMatrix(), 

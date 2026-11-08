@@ -34,7 +34,6 @@ jest_test(
     config = "jest.config.mjs",
     data = [
         ":utilTest",
-        "babel.config.json",
         "package.json"
     ],
     node_options = [
@@ -54,7 +53,6 @@ ts_project(
         ":graphics-engine",
         "//:node_modules/@types/jest",
         "//:node_modules/@types/node",
-        "//:node_modules/@babel/preset-env",
         "//:node_modules/jest-environment-jsdom",
         "//:node_modules/ts-jest"
     ],
