@@ -27,6 +27,21 @@ export interface Ray {
     vector: Vector3;
 }
 
+export function truncateRay(ray: Ray, precision: number): Ray {
+  return {
+    origin: {
+      x: +ray.origin.x.toFixed(precision),
+      y: +ray.origin.y.toFixed(precision),
+      z: +ray.origin.z.toFixed(precision)
+    },
+    vector: {
+      x: +ray.vector.x.toFixed(precision),
+      y: +ray.vector.y.toFixed(precision),
+      z: +ray.vector.z.toFixed(precision)
+    }
+  }
+}
+
 export interface Line {
     startPoint: Vector3;
     endPoint: Vector3;
