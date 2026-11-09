@@ -1,5 +1,5 @@
 import { mat4, vec3, vec4 } from "gl-matrix";
-import { Vector2, Vector3, Vector4, crossProduct, dotProduct, fromVec3, minus, normalize, plus, roundToEPSILON, times, toVec3 } from "./model/vector";
+import { Vector2, Vector3, Vector4, crossProduct, dotProduct, fromVec3, minus, normalize, plus, roundToEPSILON, times, toVec4 } from "./model/vector";
 import { Camera } from "./model/camera";
 
 export const defaultNear = 0.01;
@@ -57,8 +57,8 @@ export function unprojectWithInverseProjection(inverseMatrix: mat4, vector: Vect
 
     let near = vec4.create();
     let far = vec4.create();
-    project(near, toVec3(toProjectNear), inverseMatrix);
-    project(far, toVec3(toProjectFar), inverseMatrix);
+    project(near, toVec4(toProjectNear), inverseMatrix);
+    project(far, toVec4(toProjectFar), inverseMatrix);
 
     return {
         origin: {
@@ -126,9 +126,9 @@ export function intersectsDoubleSided(ray: Ray, triangle: Triangle): Vector3 | n
 
 // Möller–Trumbore intersection algorithm
 export function intersects(origin: Vector3, rayVector: Vector3, triangle: Triangle): Vector3 | null {
-    
+
     let vertex0 = triangle.point1;
-    let vertex1 = triangle.point2;  
+    let vertex1 = triangle.point2;
     let vertex2 = triangle.point3;
 
     let edge1 = minus(vertex1, vertex0);
@@ -144,7 +144,7 @@ export function intersects(origin: Vector3, rayVector: Vector3, triangle: Triang
     let inverseOfDeterminantOfMatrix = 1.0 / determinantOfTheMatrix;
     let distanceBetweenOriginAndEdgesOrigin = minus(origin, vertex0);
 
-    let barycentricU = dotProduct(distanceBetweenOriginAndEdgesOrigin, rayVectorEdgeNormal) * inverseOfDeterminantOfMatrix; 
+    let barycentricU = dotProduct(distanceBetweenOriginAndEdgesOrigin, rayVectorEdgeNormal) * inverseOfDeterminantOfMatrix;
     if (barycentricU < 0.0 || barycentricU > 1.0) {
         return null; //Not in triangle
     }
@@ -188,7 +188,7 @@ export function lookAtPerspective(camera: Camera, lookAtObject: Vector3, tempUpV
 
     const rightVector = normalize(crossProduct(tempUpVector, forwardVector))
 
-    const upVector = normalize(crossProduct(forwardVector,rightVector));    
+    const upVector = normalize(crossProduct(forwardVector,rightVector));
 
     const translationX = dotProduct(camera.position, rightVector);
     const translationY = dotProduct(camera.position, upVector);
@@ -214,7 +214,7 @@ export function lookAtPerspective(camera: Camera, lookAtObject: Vector3, tempUpV
     );
 
     mat4.multiply(newProjectionMatrix, projectionMatrix, lookAtMatrix)
-    
+
     mat4.translate(
       newProjectionMatrix,
       newProjectionMatrix,
@@ -275,7 +275,7 @@ export function cameraBasedProjection(camera: Camera, webGl: WebGL2RenderingCont
       projectionMatrix,
       projectionMatrix,
       [-camera.position.x, -camera.position.y, camera.position.z]);
-      
+
     mat4.rotateX(
       projectionMatrix,
       projectionMatrix,

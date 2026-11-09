@@ -88,6 +88,10 @@ export function toVec3(v1: Vector3): vec3 {
     return [v1.x, v1.y, v1.z];
 }
 
+export function toVec4(v1: Vector4): vec3 {
+    return [v1.x, v1.y, v1.z, v1.w];
+}
+
 export function distance(a: Vector2, b: Vector2): number {
     return Math.sqrt(Math.pow((b.x - a.x), 2) + Math.pow((b.y - a.y), 2));
 }
